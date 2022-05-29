@@ -20,6 +20,10 @@ public class Shoe extends Product {
     public String getGender() {
         return this.gender;
     }
+
+    public void updateSizes(ArrayList<Double> newSizes) {
+        this.sizes = newSizes;
+    }
 }
 
 

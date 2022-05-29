@@ -13,17 +13,21 @@ import java.nio.file.StandardCopyOption;
 public class Inventory implements ActionListener {
     
     private JPanel optionsPanel, menuTab, newProdPanel, inventoryPanel, scrollPanel, updateProdPanel;
-    private JLabel title, imgLabel;
+    private JLabel title, imgLabel, prodLabel;
     private JFrame WIN, errorWindow;
     private ArrayList<Product> products;
     private JComboBox prodType, prodGender;
     private File currFile;
     private JTextField brandText, modelText, priceText, horizontalTensionText, verticalTensionText, gripSizeText, weightText, quantityText; 
     private String imgName;
-    private JButton racquetDoneButton, backToOptions, backToEditProds, shoeDoneButton;
+    private JButton racquetDoneButton, backToOptions, backToEditProds, shoeDoneButton, backToUpdateProd, updatePriceButton, updateQuantityButton, updateSizeButton;
     private JTextArea descriptionText;
-    private ArrayList<ProdCheckbox> checkBoxes;
-    private ArrayList<JCheckBox> sizeCheckBoxes;
+    private ArrayList<ProdCheckbox> checkBoxes, selectedBoxes;
+    private ArrayList<JCheckBox> sizeCheckBoxes, updateSizeCheckBoxes;
+    private Product prodToUpdate;
+    private double newPrice;
+    private Integer newQuantity;
+    private ArrayList<Double> newSizes;
 
     public Inventory(JFrame WIN, JPanel panel) throws FileNotFoundException {
 
@@ -113,6 +117,7 @@ public class Inventory implements ActionListener {
                 int quantity = inventoryScanner.nextInt();
                 emptyLine = inventoryScanner.nextLine();
                 File image = new File("Product Images\\" + inventoryScanner.nextLine());
+                sizeScanner.close();
 
                 products.add(new Shoe(price, brand, model, description, quantity, image, sizeList, gender));
                 
@@ -178,7 +183,13 @@ public class Inventory implements ActionListener {
 
     //Updating products
     public void updateProd(Product prod) {
+        prodToUpdate = prod;
 
+        if (selectedBoxes.size() != 0) {
+            selectedBoxes.get(0).setSelected(false);
+            selectedBoxes.clear();
+        }
+        
         menuTab.setVisible(false);
 
         updateProdPanel = new JPanel();
@@ -186,15 +197,72 @@ public class Inventory implements ActionListener {
 
         title = new JLabel("Update Product");
         title.setFont(new Font("Verdana", Font.BOLD, 20));
-        title.setBounds(405, 0, 200, 50);
+        title.setBounds(110, 0, 200, 50);
+        
+        String prodType = prod.getClass().toString();
+        prodType = prodType.substring(6, prodType.length());
 
-        backToEditProds = new JButton("Back");
-        backToEditProds.setBounds(440, 55, 100, 20);
-        backToEditProds.addActionListener(this);
+        if (prodType.equals("Shoe")) {
+
+            WIN.setSize(400, 400);
+
+            prodLabel = new JLabel("Edit Shoe: " + prod.getBrand() + " " + prod.getModel());
+            prodLabel.setBounds(20, 55, 380, 20);
+            prodLabel.setFont(new Font("Verdana", Font.PLAIN, 15));
+
+            JButton updatePrice = new JButton("Update Price");
+            updatePrice.setBounds(120, 100, 150, 40);
+            updatePrice.addActionListener(this);
+
+            JButton updateQuantity = new JButton("Update Quantity");
+            updateQuantity.setBounds(120, 160, 150, 40);
+            updateQuantity.addActionListener(this);
+
+            JButton updateSizes = new JButton("Update Sizes");
+            updateSizes.setBounds(120, 220, 150, 40);
+            updateSizes.addActionListener(this);  
+
+            backToEditProds = new JButton("Back");
+            backToEditProds.setBounds(145, 300, 100, 20);
+            backToEditProds.addActionListener(this);
+
+            updateProdPanel.add(updatePrice);
+            updateProdPanel.add(updateQuantity);
+            updateProdPanel.add(updateSizes);
+            updateProdPanel.add(prodLabel);
+            updateProdPanel.revalidate();
+            updateProdPanel.repaint();
+
+        } else if (prodType.equals("Racquet")) {
+
+            WIN.setSize(400, 300);
+            
+            prodLabel = new JLabel("Edit Racquet: " + prod.getBrand() + " " + prod.getModel());
+            prodLabel.setBounds(20, 55, 380, 20);
+            prodLabel.setFont(new Font("Verdana", Font.PLAIN, 15));
+
+            JButton updatePrice = new JButton("Update Price");
+            updatePrice.setBounds(120, 100, 150, 40);
+            updatePrice.addActionListener(this);
+
+            JButton updateQuantity = new JButton("Update Quantity");
+            updateQuantity.setBounds(120, 160, 150, 40);
+            updateQuantity.addActionListener(this);
+
+            backToEditProds = new JButton("Back");
+            backToEditProds.setBounds(145, 220, 100, 20);
+            backToEditProds.addActionListener(this);
+
+            updateProdPanel.add(updatePrice);
+            updateProdPanel.add(updateQuantity);
+            updateProdPanel.add(prodLabel);
+        }
 
         updateProdPanel.add(backToEditProds);
         updateProdPanel.add(title);
         WIN.add(updateProdPanel);
+        updateProdPanel.revalidate();
+        updateProdPanel.repaint();
     }
 
     //Adding new products screen
@@ -227,7 +295,7 @@ public class Inventory implements ActionListener {
 
     //Deleting selected products
     public ArrayList<Product> deleteProds() {
-        
+
         ArrayList<Product> prodsToRemove = new ArrayList<Product>();
 
         for (ProdCheckbox checkBox: checkBoxes) {
@@ -242,15 +310,17 @@ public class Inventory implements ActionListener {
             }
         }
 
-        checkBoxes.clear();
         return products;
     }
 
     //Editing products screen
     public void editProds() {
-
+        checkBoxes.clear();
+        
         optionsPanel.setVisible(false);
+        WIN.setSize(1000, 800);
         WIN.setLayout(new BorderLayout());
+        WIN.setLocationRelativeTo(null);
 
         menuTab = new JPanel();
         menuTab.setPreferredSize(new Dimension(1000, 800));
@@ -269,7 +339,7 @@ public class Inventory implements ActionListener {
         deleteProd.setBounds(515, 25, 200, 25);
         deleteProd.addActionListener(this);
 
-        JButton editSelectedProd = new JButton("Edit Selected Item");
+        JButton editSelectedProd = new JButton("Update Selected Item");
         editSelectedProd.setBounds(755, 25, 200, 25);
         editSelectedProd.addActionListener(this);
 
@@ -296,14 +366,16 @@ public class Inventory implements ActionListener {
             scrollPanel.add(prodSelectBox);
             yValue += 20;
         }
-
+        
         inventoryPanel.add(BorderLayout.CENTER, new JScrollPane(scrollPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
         menuTab.add(inventoryPanel);
-        
         WIN.add(menuTab);
-        WIN.setSize(1000, 800);
-        WIN.setLocationRelativeTo(null);
-
+        menuTab.revalidate();
+        menuTab.repaint();
+        inventoryPanel.revalidate();
+        inventoryPanel.repaint();
+        scrollPanel.revalidate();
+        scrollPanel.repaint();
     } 
 
     @Override
@@ -313,31 +385,55 @@ public class Inventory implements ActionListener {
             editProds();
         } else if (click.getSource() == backToOptions) {
             try {
-                menuTab.setVisible(false);
-                new Inventory(WIN, new JPanel());
+                new Inventory(WIN, menuTab);
             } catch (FileNotFoundException error) {
                 System.out.println(error.getMessage());
             }
         } else if (click.getActionCommand().equals("Add New Products")) {
             newProd();
-        } else if (click.getActionCommand().equals("Edit Selected Item")) {
+        } else if (click.getActionCommand().equals("Update Selected Item")) {
+            if (errorWindow != null) {
+                errorWindow.dispose();
+            }
+
+            selectedBoxes = new ArrayList<ProdCheckbox>();
+
             for (ProdCheckbox checkBox: checkBoxes) {
-                if (checkBoxes.isSelected) {
-                    System.out.println("checked");
+                if (checkBox.isSelected()) {
+                    selectedBoxes.add(checkBox);
                 }
             }
-            updateProd();
+
+            if (selectedBoxes.size() == 1) {
+                updateProd(selectedBoxes.get(0).getProd());
+            } else {
+                errorWindow = new JFrame();
+                errorWindow.setTitle("ERROR");
+                errorWindow.setLocationRelativeTo(null);
+                errorWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                errorWindow.setSize(250, 70);
+                errorWindow.setLayout(null);
+                errorWindow.setVisible(true);
+                errorWindow.setResizable(false);
+
+                JPanel errorPanel = new JPanel();
+                errorPanel.setLayout(null);
+                errorPanel.setSize(300, 200);
+                errorPanel.setVisible(true);
+                
+                JLabel error = new JLabel("Please select one item to edit.");
+                error.setBounds(10, 0, 300, 20);
+                error.setForeground(Color.red);
+                error.setFont(new Font("Arial", Font.BOLD, 15));
+
+                errorPanel.add(error);
+                errorWindow.add(errorPanel);
+            }
         } else if (click.getActionCommand().equals("Delete Selected Products")) {
             products = deleteProds();
-            menuTab.setVisible(false);
             updateProdFile();
+            menuTab.setVisible(false);
             editProds();
-            menuTab.revalidate();
-            menuTab.repaint();
-            inventoryPanel.revalidate();
-            inventoryPanel.repaint();
-            scrollPanel.revalidate();
-            scrollPanel.repaint();
         } else if (click.getSource() == prodType) {
             if (prodType.getSelectedItem().equals("Racquets")) {
 
@@ -633,8 +729,6 @@ public class Inventory implements ActionListener {
                         imgLabel.setIcon(resizedCurrImgIcon);
                         imgLabel.repaint();
                     } else {
-                        System.out.println("wrong type");
-                        
                         errorWindow = new JFrame();
                         errorWindow.setTitle("ERROR");
                         errorWindow.setLocationRelativeTo(null);
@@ -649,8 +743,8 @@ public class Inventory implements ActionListener {
                         errorPanel.setSize(200, 200);
                         errorPanel.setVisible(true);
                         
-                        JLabel error = new JLabel("Invalid File Type");
-                        error.setBounds(60, 0, 150, 20);
+                        JLabel error = new JLabel("Invalid file type.");
+                        error.setBounds(60, 0, 150, 20); //Fix this
                         error.setForeground(Color.red);
                         error.setFont(new Font("Arial", Font.BOLD, 15));
 
@@ -749,6 +843,126 @@ public class Inventory implements ActionListener {
             } catch (IOException error) {
                 System.out.println(error.getMessage());
             }
+        } else if (click.getActionCommand().equals("Update Price")) {
+            updateProdPanel.removeAll();
+
+            JLabel newPriceLabel = new JLabel("Enter new price:");
+            newPriceLabel.setBounds(150, 120, 200, 20);
+
+            JTextField newPriceText = new JTextField(20);
+            newPriceText.setBounds(100, 160, 200, 20);
+
+            updatePriceButton = new JButton("Done");
+            updatePriceButton.setBounds(220, 220, 80, 20);
+            updatePriceButton.addActionListener(this);
+
+            backToUpdateProd = new JButton("Back");
+            backToUpdateProd.setBounds(100, 220, 80, 20);
+            backToUpdateProd.addActionListener(this);
+
+            updateProdPanel.add(backToUpdateProd);
+            updateProdPanel.add(updatePriceButton);
+            updateProdPanel.add(newPriceLabel);
+            updateProdPanel.add(newPriceText);
+            updateProdPanel.add(updatePriceButton);
+            updateProdPanel.add(title);
+            updateProdPanel.add(prodLabel);
+
+            updateProdPanel.revalidate();
+            updateProdPanel.repaint();
+        } else if (click.getActionCommand().equals("Update Quantity")) {
+            updateProdPanel.removeAll();
+
+            JLabel newQuantityLabel = new JLabel("Enter new quantity:");
+            newQuantityLabel.setBounds(120, 120, 200, 20);
+
+            JTextField newQuantityText = new JTextField(20);
+            newQuantityText.setBounds(120, 160, 200, 20);
+
+            updateQuantityButton = new JButton("Done");
+            updateQuantityButton.setBounds(220, 220, 80, 20);
+            updateQuantityButton.addActionListener(this);
+
+            backToUpdateProd = new JButton("Back");
+            backToUpdateProd.setBounds(100, 220, 80, 20);
+            backToUpdateProd.addActionListener(this);
+            
+            updateProdPanel.add(backToUpdateProd);
+            updateProdPanel.add(updatePriceButton);
+            updateProdPanel.add(newQuantityLabel);
+            updateProdPanel.add(newQuantityText);
+            updateProdPanel.add(updateQuantityButton);
+            updateProdPanel.add(title);
+            updateProdPanel.add(prodLabel);
+
+            updateProdPanel.revalidate();
+            updateProdPanel.repaint();
+        } else if (click.getActionCommand().equals("Update Sizes")) {
+            updateProdPanel.removeAll();
+            updateSizeCheckBoxes = new ArrayList<JCheckBox>();
+
+            JLabel newSizeLabel = new JLabel("Select new sizes:");
+            newSizeLabel.setBounds(145 , 120, 200, 20);
+
+            JCheckBox size7 = new JCheckBox("7");
+            size7.setBounds(70, 160, 50, 20);
+            updateSizeCheckBoxes.add(size7);
+            
+            JCheckBox size7_5 = new JCheckBox("7.5");
+            size7_5.setBounds(70, 180, 50, 20);
+            updateSizeCheckBoxes.add(size7_5);
+            
+            JCheckBox size8 = new JCheckBox("8");
+            size8.setBounds(70, 200, 50, 20);
+            updateSizeCheckBoxes.add(size8);
+            
+            JCheckBox size8_5 = new JCheckBox("8.5");
+            size8_5.setBounds(170, 160, 50, 20);
+            updateSizeCheckBoxes.add(size8_5);
+            
+            JCheckBox size9 = new JCheckBox("9");
+            size9.setBounds(170, 180, 50, 20);
+            updateSizeCheckBoxes.add(size9);
+            
+            JCheckBox size9_5 = new JCheckBox("9.5");
+            size9_5.setBounds(170, 200, 50, 20);
+            updateSizeCheckBoxes.add(size9_5);
+            
+            JCheckBox size10 = new JCheckBox("10");
+            size10.setBounds(270, 160, 50, 20);
+            updateSizeCheckBoxes.add(size10);
+            
+            JCheckBox size10_5 = new JCheckBox("10.5");
+            size10_5.setBounds(270, 180, 50, 20);
+            updateSizeCheckBoxes.add(size10_5);
+            
+            JCheckBox size11 = new JCheckBox("11");
+            size11.setBounds(270, 200, 50, 20);
+            updateSizeCheckBoxes.add(size11);
+
+            updateSizeButton = new JButton("Done");
+            updateSizeButton.setBounds(215, 240, 80, 20);
+            updateSizeButton.addActionListener(this);
+
+            backToUpdateProd = new JButton("Back");
+            backToUpdateProd.setBounds(95, 240, 80, 20);
+            backToUpdateProd.addActionListener(this);
+
+            for (JCheckBox sizeCheckBox: updateSizeCheckBoxes) {
+                updateProdPanel.add(sizeCheckBox);
+            }
+
+            updateProdPanel.add(backToUpdateProd);
+            updateProdPanel.add(updateSizeButton);
+            updateProdPanel.add(newSizeLabel);
+            updateProdPanel.add(title);
+            updateProdPanel.add(prodLabel);
+
+            updateProdPanel.revalidate();
+            updateProdPanel.repaint();
+        } else if (click.getSource() == backToUpdateProd) {
+            updateProdPanel.setVisible(false);
+            updateProd(prodToUpdate);
         }
     }
 }

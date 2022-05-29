@@ -65,4 +65,16 @@ public class Product {
     public String getGender() {
         return "";
     }
+
+    public void updatePrice(Double newPrice) {
+        this.price = newPrice;
+    }
+
+    public void updateQuantity(int newQuantity) {
+        this.quantity = newQuantity;
+    }
+
+    public void updateSizes(ArrayList<Double> newSizes) {
+        this.sizes = newSizes;
+    }
 }
