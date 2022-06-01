@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream.GetField;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
@@ -14,21 +15,20 @@ public class Inventory implements ActionListener {
     
     private JPanel optionsPanel, menuTab, newProdPanel, inventoryPanel, scrollPanel, updateProdPanel;
     private JLabel title, imgLabel, prodLabel;
-    private JFrame WIN, errorWindow;
+    private JFrame WIN;
+    private ErrorWindow errorWindow;
     private ArrayList<Product> products;
     private JComboBox prodType, prodGender;
     private File currFile;
-    private JTextField brandText, modelText, priceText, horizontalTensionText, verticalTensionText, gripSizeText, weightText, quantityText; 
+    private JTextField brandText, modelText, priceText, horizontalTensionText, verticalTensionText, gripSizeText, weightText, quantityText, newPriceText, newQuantityText; 
     private String imgName;
     private JButton racquetDoneButton, backToOptions, backToEditProds, shoeDoneButton, backToUpdateProd, updatePriceButton, updateQuantityButton, updateSizeButton;
     private JTextArea descriptionText;
     private ArrayList<ProdCheckbox> checkBoxes, selectedBoxes;
     private ArrayList<JCheckBox> sizeCheckBoxes, updateSizeCheckBoxes;
+    private ArrayList<ProdButton> viewButtons;
     private Product prodToUpdate;
-    private double newPrice;
-    private Integer newQuantity;
-    private ArrayList<Double> newSizes;
-
+    
     public Inventory(JFrame WIN, JPanel panel) throws FileNotFoundException {
 
         //Window Configuration
@@ -40,12 +40,13 @@ public class Inventory implements ActionListener {
         WIN.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.products = new ArrayList<Product>();
         this.checkBoxes = new ArrayList<ProdCheckbox>();
+        this.viewButtons = new ArrayList<ProdButton>();
 
         panel.setVisible(false);
         optionsPanel = new JPanel();
         optionsPanel.setLayout(null);
 
-        //Widgets
+        //Options Menu
         JButton newProd = new JButton("Edit Products");
         newProd.setBounds(115, 65, 155, 50);
         newProd.addActionListener(this);
@@ -181,7 +182,7 @@ public class Inventory implements ActionListener {
         }
     }
 
-    //Updating products
+    //Updating existing products
     public void updateProd(Product prod) {
         prodToUpdate = prod;
 
@@ -378,16 +379,81 @@ public class Inventory implements ActionListener {
         scrollPanel.repaint();
     } 
 
+    public void searchProds() {
+        
+        optionsPanel.setVisible(false);
+        WIN.setSize(1000, 800);
+        WIN.setLayout(new BorderLayout());
+        WIN.setLocationRelativeTo(null);
+
+        menuTab = new JPanel();
+        menuTab.setPreferredSize(new Dimension(1000, 800));
+        menuTab.setLayout(null);
+        menuTab.setBackground(Color.cyan);
+
+        backToOptions = new JButton("Back");
+        backToOptions.setBounds(35, 25, 80, 25);
+        backToOptions.addActionListener(this);
+
+        JButton editSelectedProd = new JButton("Search");
+        editSelectedProd.setBounds(755, 25, 80, 25);
+        editSelectedProd.addActionListener(this);
+
+        menuTab.add(backToOptions);
+        menuTab.add(editSelectedProd);
+
+        inventoryPanel = new JPanel();
+        inventoryPanel.setLayout(new BorderLayout());
+        inventoryPanel.setBounds(0, 150, 987, 615);
+
+        scrollPanel = new JPanel();
+        scrollPanel.setPreferredSize(new Dimension(1000, 5000));
+        scrollPanel.setLayout(null);
+
+        JLabel clickToView =  new JLabel("Click to View Product:");
+        clickToView.setBounds(0, 0, 1000, 20);
+        scrollPanel.add(clickToView);
+
+        int yValue = 20;
+
+        for (Product prod: products) {
+            ProdButton viewProdButton = new ProdButton("View: " + prod.getBrand() + " " + prod.getModel(), prod);
+            viewProdButton.setBounds(0, yValue, 969, 20);
+            viewProdButton.setFocusable(false);
+            viewButtons.add(viewProdButton);
+            scrollPanel.add(viewProdButton);
+            yValue += 20;
+        }
+        
+        inventoryPanel.add(BorderLayout.CENTER, new JScrollPane(scrollPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
+        menuTab.add(inventoryPanel);
+        WIN.add(menuTab);
+        menuTab.revalidate();
+        menuTab.repaint();
+        inventoryPanel.revalidate();
+        inventoryPanel.repaint();
+        scrollPanel.revalidate();
+        scrollPanel.repaint();
+    }
+
     @Override
     public void actionPerformed(ActionEvent click) {
         
         if (click.getActionCommand().equals("Edit Products")) {
             editProds();
+        } else if (click.getActionCommand().equals("Search Products")) {
+            searchProds();
         } else if (click.getSource() == backToOptions) {
             try {
+                if (errorWindow != null) {
+                    errorWindow.dispose();
+                }
                 new Inventory(WIN, menuTab);
-            } catch (FileNotFoundException error) {
-                System.out.println(error.getMessage());
+            } catch (FileNotFoundException e) {
+                if (errorWindow != null) {
+                    errorWindow.dispose();
+                }
+                errorWindow = new ErrorWindow("Inventory file not found.");
             }
         } else if (click.getActionCommand().equals("Add New Products")) {
             newProd();
@@ -407,27 +473,7 @@ public class Inventory implements ActionListener {
             if (selectedBoxes.size() == 1) {
                 updateProd(selectedBoxes.get(0).getProd());
             } else {
-                errorWindow = new JFrame();
-                errorWindow.setTitle("ERROR");
-                errorWindow.setLocationRelativeTo(null);
-                errorWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                errorWindow.setSize(250, 70);
-                errorWindow.setLayout(null);
-                errorWindow.setVisible(true);
-                errorWindow.setResizable(false);
-
-                JPanel errorPanel = new JPanel();
-                errorPanel.setLayout(null);
-                errorPanel.setSize(300, 200);
-                errorPanel.setVisible(true);
-                
-                JLabel error = new JLabel("Please select one item to edit.");
-                error.setBounds(10, 0, 300, 20);
-                error.setForeground(Color.red);
-                error.setFont(new Font("Arial", Font.BOLD, 15));
-
-                errorPanel.add(error);
-                errorWindow.add(errorPanel);
+                errorWindow = new ErrorWindow("Please select one item to edit.");
             }
         } else if (click.getActionCommand().equals("Delete Selected Products")) {
             products = deleteProds();
@@ -729,30 +775,10 @@ public class Inventory implements ActionListener {
                         imgLabel.setIcon(resizedCurrImgIcon);
                         imgLabel.repaint();
                     } else {
-                        errorWindow = new JFrame();
-                        errorWindow.setTitle("ERROR");
-                        errorWindow.setLocationRelativeTo(null);
-                        errorWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                        errorWindow.setSize(250, 70);
-                        errorWindow.setLayout(null);
-                        errorWindow.setVisible(true);
-                        errorWindow.setResizable(false);
-
-                        JPanel errorPanel = new JPanel();
-                        errorPanel.setLayout(null);
-                        errorPanel.setSize(200, 200);
-                        errorPanel.setVisible(true);
-                        
-                        JLabel error = new JLabel("Invalid file type.");
-                        error.setBounds(60, 0, 150, 20); //Fix this
-                        error.setForeground(Color.red);
-                        error.setFont(new Font("Arial", Font.BOLD, 15));
-
-                        errorPanel.add(error);
-                        errorWindow.add(errorPanel);
+                        errorWindow = new ErrorWindow("Invalid file type.");
                     }
                 }
-            }            
+            }         
         } else if (click.getSource() == racquetDoneButton) {
             try {
                 File fileStorage = new File("C:\\Users\\ryand\\Downloads\\Inventory GUI\\Product Images\\" + imgName);
@@ -787,6 +813,12 @@ public class Inventory implements ActionListener {
                 
             } catch (IOException error) {
                 System.out.println(error.getMessage());
+            } catch (NumberFormatException e) {
+                if (errorWindow != null) {
+                    errorWindow.dispose();
+                }
+                String[] invalidInput = e.getMessage().split(":");
+                errorWindow = new ErrorWindow("Invalid input:" + invalidInput[1]);
             }
         } else if (click.getSource() == backToEditProds) {
             if (newProdPanel != null) {
@@ -814,6 +846,7 @@ public class Inventory implements ActionListener {
                 for (JCheckBox sizeCheckBox: sizeCheckBoxes) {
                     if (sizeCheckBox.isSelected()) {
                         selectedSizes.add(Double.parseDouble(sizeCheckBox.getText()));
+                        sizeCheckBox.setSelected(false);
                     }
                 }
 
@@ -829,10 +862,6 @@ public class Inventory implements ActionListener {
                 prodGender.setSelectedItem("Select Gender...");
                 currFile = null;
 
-                for (JCheckBox sizeCheckBox: sizeCheckBoxes) {
-                    sizeCheckBox.setSelected(false);
-                }
-
                 ImageIcon defaultImgIcon = new ImageIcon("Add Image.png");
                 Image defaultImg = defaultImgIcon.getImage();
                 Image resizedDefaultImg = defaultImg.getScaledInstance(350, 250, Image.SCALE_SMOOTH);
@@ -842,22 +871,36 @@ public class Inventory implements ActionListener {
                 
             } catch (IOException error) {
                 System.out.println(error.getMessage());
+            } catch (NumberFormatException e) {
+                if (errorWindow != null) {
+                    errorWindow.dispose();
+                }
+
+                if (e.getMessage().equals("empty String")) {
+                    errorWindow = new ErrorWindow("Please fill in all areas.");
+                } else {
+                    String[] invalidInput = e.getMessage().split(":");
+                    errorWindow = new ErrorWindow("Invalid input:" + invalidInput[1]);
+                }
             }
         } else if (click.getActionCommand().equals("Update Price")) {
             updateProdPanel.removeAll();
 
             JLabel newPriceLabel = new JLabel("Enter new price:");
-            newPriceLabel.setBounds(150, 120, 200, 20);
+            newPriceLabel.setBounds(145, 120, 200, 20);
 
-            JTextField newPriceText = new JTextField(20);
-            newPriceText.setBounds(100, 160, 200, 20);
+            newPriceText = new JTextField(20);
+            newPriceText.setBounds(105, 160, 190, 20);
+
+            JLabel dollarSign = new JLabel("$");
+            dollarSign.setBounds(95, 160, 10, 20);
 
             updatePriceButton = new JButton("Done");
-            updatePriceButton.setBounds(220, 220, 80, 20);
+            updatePriceButton.setBounds(215, 220, 80, 20);
             updatePriceButton.addActionListener(this);
 
             backToUpdateProd = new JButton("Back");
-            backToUpdateProd.setBounds(100, 220, 80, 20);
+            backToUpdateProd.setBounds(95, 220, 80, 20);
             backToUpdateProd.addActionListener(this);
 
             updateProdPanel.add(backToUpdateProd);
@@ -867,6 +910,7 @@ public class Inventory implements ActionListener {
             updateProdPanel.add(updatePriceButton);
             updateProdPanel.add(title);
             updateProdPanel.add(prodLabel);
+            updateProdPanel.add(dollarSign);
 
             updateProdPanel.revalidate();
             updateProdPanel.repaint();
@@ -874,24 +918,23 @@ public class Inventory implements ActionListener {
             updateProdPanel.removeAll();
 
             JLabel newQuantityLabel = new JLabel("Enter new quantity:");
-            newQuantityLabel.setBounds(120, 120, 200, 20);
+            newQuantityLabel.setBounds(140, 120, 200, 20);
 
-            JTextField newQuantityText = new JTextField(20);
-            newQuantityText.setBounds(120, 160, 200, 20);
+            newQuantityText = new JTextField(20);
+            newQuantityText.setBounds(95, 160, 200, 20);
 
             updateQuantityButton = new JButton("Done");
-            updateQuantityButton.setBounds(220, 220, 80, 20);
+            updateQuantityButton.setBounds(215, 220, 80, 20);
             updateQuantityButton.addActionListener(this);
 
             backToUpdateProd = new JButton("Back");
-            backToUpdateProd.setBounds(100, 220, 80, 20);
+            backToUpdateProd.setBounds(95, 220, 80, 20);
             backToUpdateProd.addActionListener(this);
             
             updateProdPanel.add(backToUpdateProd);
-            updateProdPanel.add(updatePriceButton);
+            updateProdPanel.add(updateQuantityButton);
             updateProdPanel.add(newQuantityLabel);
             updateProdPanel.add(newQuantityText);
-            updateProdPanel.add(updateQuantityButton);
             updateProdPanel.add(title);
             updateProdPanel.add(prodLabel);
 
@@ -902,7 +945,7 @@ public class Inventory implements ActionListener {
             updateSizeCheckBoxes = new ArrayList<JCheckBox>();
 
             JLabel newSizeLabel = new JLabel("Select new sizes:");
-            newSizeLabel.setBounds(145 , 120, 200, 20);
+            newSizeLabel.setBounds(140, 120, 200, 20);
 
             JCheckBox size7 = new JCheckBox("7");
             size7.setBounds(70, 160, 50, 20);
@@ -963,6 +1006,24 @@ public class Inventory implements ActionListener {
         } else if (click.getSource() == backToUpdateProd) {
             updateProdPanel.setVisible(false);
             updateProd(prodToUpdate);
+        } else if (click.getSource() == updatePriceButton) {
+            prodToUpdate.updatePrice(Double.parseDouble(newPriceText.getText()));
+            newPriceText.setText("");
+            updateProdFile();
+        } else if (click.getSource() == updateQuantityButton) {
+            prodToUpdate.updateQuantity(Integer.parseInt(newQuantityText.getText()));
+            newQuantityText.setText("");
+            updateProdFile();
+        } else if (click.getSource() == updateSizeButton) {
+            ArrayList<Double> selectedSizes = new ArrayList<Double>();
+            for (JCheckBox checkBox: updateSizeCheckBoxes) {
+                if (checkBox.isSelected()) {
+                    selectedSizes.add(Double.parseDouble(checkBox.getText()));
+                    checkBox.setSelected(false);   
+                }
+            }
+            prodToUpdate.updateSizes(selectedSizes);
+            updateProdFile();
         }
     }
 }

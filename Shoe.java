@@ -25,5 +25,3 @@ public class Shoe extends Product {
         this.sizes = newSizes;
     }
 }
-
-

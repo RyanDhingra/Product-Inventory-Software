@@ -59,7 +59,7 @@ public class Product {
     }
 
     public ArrayList<Double> getSizes() {
-        return new ArrayList<Integer>();
+        return new ArrayList<Double>();
     }
 
     public String getGender() {
