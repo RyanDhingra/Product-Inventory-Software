@@ -1,3 +1,4 @@
+import javax.naming.spi.DirStateFactory.Result;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream.GetField;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.security.DrbgParameters.Reseed;
 
 public class Inventory implements ActionListener {
     
@@ -379,7 +381,7 @@ public class Inventory implements ActionListener {
         scrollPanel.repaint();
     } 
 
-    public void searchProds(ArrayList<Product> prodsToDisplay) {
+    public void searchProds() {
         
         optionsPanel.setVisible(false);
         WIN.setSize(1000, 800);
@@ -422,7 +424,7 @@ public class Inventory implements ActionListener {
         ArrayList<String> brands = new ArrayList<String>();
         brands.add("Select Brand...");
 
-        for (Product prod: prodsToDisplay) {
+        for (Product prod: products) {
             if (!brands.contains(prod.getBrand())) {
                 brands.add(prod.getBrand());
             }
@@ -460,7 +462,7 @@ public class Inventory implements ActionListener {
 
         int yValue = 0;
 
-        for (Product prod: prodsToDisplay) {
+        for (Product prod: products) {
             ProdButton viewProdButton = new ProdButton(prod.getBrand() + " " + prod.getModel(), prod);
             viewProdButton.addActionListener(this);
             viewProdButton.setBounds(0, yValue, 969, 20);
@@ -496,7 +498,7 @@ public class Inventory implements ActionListener {
         if (click.getActionCommand().equals("Edit Products")) {
             editProds();
         } else if (click.getActionCommand().equals("Search Products")) {
-            searchProds(products);
+            searchProds();
         } else if (click.getSource() == backToOptions) {
             try {
                 if (errorWindow != null) {
@@ -1079,7 +1081,11 @@ public class Inventory implements ActionListener {
             prodToUpdate.updateSizes(selectedSizes);
             updateProdFile();
         } else if (click.getActionCommand().equals("Search")) {
-            ArrayList<Product> searchResults = new ArrayList<Product>();
+            ArrayList<Product> prodTypeFiltered = new ArrayList<Product>();
+            ArrayList<Product> brandTypeFiltered = new ArrayList<Product>();
+            ArrayList<Product> priceRangeFiltered = new ArrayList<Product>();
+            ArrayList<Product> stockOptionFiltered = new ArrayList<Product>();
+            ArrayList<Product> searchTermFiltered = new ArrayList<Product>();
 
             String prodType = prodFilter.getSelectedItem().toString();
             String brandType = brandFilter.getSelectedItem().toString();
@@ -1088,26 +1094,71 @@ public class Inventory implements ActionListener {
             String searchTerm = searchBar.getText();
             
             //Search Filters
+            if (!prodType.equals("Select Product Type...")) {
+                for (Product prod: products) {
+                    String currProdType = prod.getClass().toString();
+                    currProdType = currProdType.substring(6, currProdType.length());
+                    if (currProdType.equals(prodType)) {
+                        prodTypeFiltered.add(prod);
+                    }
+                }
+            } else {
+                for (Product prod: products) {
+                    prodTypeFiltered.add(prod);
+                }
+            }
+
+            if (!brandType.equals("Select Brand...")) {
+                for (Product prod: prodTypeFiltered) {
+                    String currBrandType = prod.getBrand();
+                    if (currBrandType.equals(brandType)) {
+                        prodTypeFiltered.add(prod);
+                    }
+                }
+            } else {
+                for (Product prod: prodTypeFiltered) {
+                    brandTypeFiltered.add(prod);
+                }
+            }
+
             if (priceRange.equals("$300+")) {
-                System.out.println("yur");
+                double minPrice = 300.0;
+                for (Product prod: brandTypeFiltered) {
+                    if (prod.getPrice() >= minPrice) {
+                        priceRangeFiltered.add(prod);
+                    }
+                }
             } else if (!priceRange.equals("Select Price Range...")) {
                 priceRange = priceRange.replace("$", "");
                 String[] prices = priceRange.split("-");
                 double minPrice = Double.parseDouble(prices[0]);
                 double maxPrice = Double.parseDouble(prices[1]);
-                for (Product prod: products) {
+                for (Product prod: brandTypeFiltered) {
                     if (minPrice <= prod.getPrice() && maxPrice >= prod.getPrice()) {
-                        searchResults.add(prod);
+                        priceRangeFiltered.add(prod);
                     }
                 }
+            } else {
+                for (Product prod: brandTypeFiltered) {
+                    priceRangeFiltered.add(prod);
+                }
             }
-            
-            for (Product prod: products) {
-                String currProdType = prod.getClass();
-                currProdType = currProdType.substring(6, currProdType.length());
-                System.out.println(currProdType);
-                if (currProdType.equals(prodType)) {
-                    searchResults.add(prod);
+
+            if (stockOption.equals("Select Availability...")) {
+                for (Product prod: priceRangeFiltered) {
+                    stockOptionFiltered.add(prod);
+                }
+            } else if (stockOption.equals("In Stock")) {
+                for (Product prod: priceRangeFiltered) {
+                    if (prod.getQuantity() > 0) {
+                        stockOptionFiltered.add(prod);
+                    }
+                }
+            } else if (stockOption.equals("Out of Stock")) {
+                for (Product prod: priceRangeFiltered) {
+                    if (prod.getQuantity() == 0) {
+                        stockOptionFiltered.add(prod);
+                    }
                 }
             }
 
@@ -1118,7 +1169,7 @@ public class Inventory implements ActionListener {
                 prodNames.add(prod.getBrand() + " " + prod.getModel());
             }
 
-            for (String name: prodNames) {
+            /*for (String name: prodNames) {
                 if (name.contains(searchTerm)) {
                     for (Product prod: products) {
                         String currName = prod.getBrand() + " " + prod.getModel();
@@ -1127,11 +1178,7 @@ public class Inventory implements ActionListener {
                         }
                     }
                 }
-            }
-
-            for (Product prod: searchResults) {
-                System.out.println(prod.getBrand() + " " + prod.getModel());
-            }
+            }*/
         }
     }
 }

@@ -75,27 +75,6 @@ public class Login implements ActionListener {
                 errorWindow.dispose();
             }
             errorWindow = new ErrorWindow("Inventory file not found.");
-            /*errorWindow = new JFrame();
-            errorWindow.setTitle("ERROR");
-            errorWindow.setLocationRelativeTo(null);
-            errorWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            errorWindow.setSize(250, 70);
-            errorWindow.setLayout(null);
-            errorWindow.setVisible(true);
-            errorWindow.setResizable(false);
-
-            JPanel errorPanel = new JPanel();
-            errorPanel.setLayout(null);
-            errorPanel.setSize(300, 200);
-            errorPanel.setVisible(true);
-            
-            JLabel error = new JLabel("Product file not found.");
-            error.setBounds(10, 0, 300, 20);
-            error.setForeground(Color.red);
-            error.setFont(new Font("Arial", Font.BOLD, 15));
-
-            errorPanel.add(error);
-            errorWindow.add(errorPanel);*/
         }
     } 
 }
