@@ -1112,7 +1112,7 @@ public class Inventory implements ActionListener {
                 for (Product prod: prodTypeFiltered) {
                     String currBrandType = prod.getBrand();
                     if (currBrandType.equals(brandType)) {
-                        prodTypeFiltered.add(prod);
+                        brandTypeFiltered.add(prod);
                     }
                 }
             } else {
@@ -1165,20 +1165,44 @@ public class Inventory implements ActionListener {
             //Searchbar
             ArrayList<String> prodNames = new ArrayList<String>();
 
-            for (Product prod: products) {
+            for (Product prod: stockOptionFiltered) {
                 prodNames.add(prod.getBrand() + " " + prod.getModel());
             }
 
-            /*for (String name: prodNames) {
-                if (name.contains(searchTerm)) {
-                    for (Product prod: products) {
-                        String currName = prod.getBrand() + " " + prod.getModel();
-                        if (currName.equals(name) && !searchResults.contains(prod)) {
-                            searchResults.add(prod);
+            if (searchTerm.equals("")) {
+                for (Product prod: stockOptionFiltered) {
+                    searchTermFiltered.add(prod);
+                }
+            } else {
+                for (String name: prodNames) {
+                    if (name.contains(searchTerm)) {
+                        for (Product prod: products) {
+                            String currName = prod.getBrand() + " " + prod.getModel();
+                            if (currName.equals(name) && !searchTermFiltered.contains(prod)) {
+                                searchTermFiltered.add(prod);
+                            }
                         }
                     }
                 }
-            }*/
+            }
+
+            scrollPanel.removeAll();
+            viewButtons.clear();
+            int yValue = 0;
+
+            for (Product prod: searchTermFiltered) {
+                ProdButton viewProdButton = new ProdButton(prod.getBrand() + " " + prod.getModel(), prod);
+                viewProdButton.addActionListener(this);
+                viewProdButton.setBounds(0, yValue, 969, 20);
+                viewProdButton.setFocusable(false);
+                viewProdButton.setHorizontalAlignment(SwingConstants.LEFT);
+                viewButtons.add(viewProdButton);
+                scrollPanel.add(viewProdButton);
+                yValue += 20;
+            }
+
+            scrollPanel.revalidate();
+            scrollPanel.repaint();
         }
     }
 }
