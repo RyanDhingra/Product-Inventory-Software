@@ -18,9 +18,9 @@ public class Inventory implements ActionListener {
     private JFrame WIN;
     private ErrorWindow errorWindow;
     private ArrayList<Product> products;
-    private JComboBox prodType, prodGender;
+    private JComboBox prodType, prodGender, brandFilter, prodFilter, priceFilter, stockFilter;
     private File currFile;
-    private JTextField brandText, modelText, priceText, horizontalTensionText, verticalTensionText, gripSizeText, weightText, quantityText, newPriceText, newQuantityText; 
+    private JTextField brandText, modelText, priceText, horizontalTensionText, verticalTensionText, gripSizeText, weightText, quantityText, newPriceText, newQuantityText, searchBar; 
     private String imgName;
     private JButton racquetDoneButton, backToOptions, backToEditProds, shoeDoneButton, backToUpdateProd, updatePriceButton, updateQuantityButton, updateSizeButton;
     private JTextArea descriptionText;
@@ -379,7 +379,7 @@ public class Inventory implements ActionListener {
         scrollPanel.repaint();
     } 
 
-    public void searchProds() {
+    public void searchProds(ArrayList<Product> prodsToDisplay) {
         
         optionsPanel.setVisible(false);
         WIN.setSize(1000, 800);
@@ -392,15 +392,60 @@ public class Inventory implements ActionListener {
         menuTab.setBackground(Color.cyan);
 
         backToOptions = new JButton("Back");
-        backToOptions.setBounds(35, 25, 80, 25);
+        backToOptions.setBounds(410, 110, 80, 20);
         backToOptions.addActionListener(this);
 
-        JButton editSelectedProd = new JButton("Search");
-        editSelectedProd.setBounds(755, 25, 80, 25);
-        editSelectedProd.addActionListener(this);
+        JLabel keywords = new JLabel("Enter Keywords:");
+        keywords.setBounds(20, 10, 100, 20);
+
+        JLabel filters = new JLabel("Filters:");
+        filters.setBounds(70, 50, 50, 20);
+
+        searchBar =  new JTextField();
+        searchBar.setBounds(120, 10, 745, 20);
+
+        String[] prodTypes = {"Select Product Type...", "Racquet", "Shoe"};
+        prodFilter = new JComboBox(prodTypes);
+        prodFilter.setBounds(120, 50, 160, 25);
+        prodFilter.addActionListener(this);
+
+        String[] stock = {"Select Availability...", "In Stock", "Out of Stock"};
+        stockFilter = new JComboBox(stock);
+        stockFilter.setBounds(705, 50, 160, 25);
+        stockFilter.addActionListener(this);
+
+        String[] priceRanges = {"Select Price Range...", "$0 - $49", "$50 - $99", "$100 - $149", "$150 - $199", "$200 - $249", "$250 - $299", "$300+"};
+        priceFilter = new JComboBox(priceRanges);
+        priceFilter.setBounds(510, 50, 160, 25);
+        priceFilter.addActionListener(this);
+
+        ArrayList<String> brands = new ArrayList<String>();
+        brands.add("Select Brand...");
+
+        for (Product prod: prodsToDisplay) {
+            if (!brands.contains(prod.getBrand())) {
+                brands.add(prod.getBrand());
+            }
+        }
+
+        String[] brandTypes = new String[brands.size()];
+
+        int x = 0;
+        for (String brand: brands) {
+            brandTypes[x] = brand;
+            x++;
+        }
+
+        brandFilter = new JComboBox(brandTypes);
+        brandFilter.setBounds(315, 50, 160, 25);
+        brandFilter.addActionListener(this);
+
+        JButton searchButton = new JButton("Search");
+        searchButton.setBounds(510, 110, 80, 20);
+        searchButton.addActionListener(this);
 
         menuTab.add(backToOptions);
-        menuTab.add(editSelectedProd);
+        menuTab.add(searchButton);
 
         inventoryPanel = new JPanel();
         inventoryPanel.setLayout(new BorderLayout());
@@ -411,21 +456,30 @@ public class Inventory implements ActionListener {
         scrollPanel.setLayout(null);
 
         JLabel clickToView =  new JLabel("Click to View Product:");
-        clickToView.setBounds(0, 0, 1000, 20);
-        scrollPanel.add(clickToView);
+        clickToView.setBounds(17, 130, 200, 20);
 
-        int yValue = 20;
+        int yValue = 0;
 
-        for (Product prod: products) {
-            ProdButton viewProdButton = new ProdButton("View: " + prod.getBrand() + " " + prod.getModel(), prod);
+        for (Product prod: prodsToDisplay) {
+            ProdButton viewProdButton = new ProdButton(prod.getBrand() + " " + prod.getModel(), prod);
+            viewProdButton.addActionListener(this);
             viewProdButton.setBounds(0, yValue, 969, 20);
             viewProdButton.setFocusable(false);
+            viewProdButton.setHorizontalAlignment(SwingConstants.LEFT);
             viewButtons.add(viewProdButton);
             scrollPanel.add(viewProdButton);
             yValue += 20;
         }
         
         inventoryPanel.add(BorderLayout.CENTER, new JScrollPane(scrollPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
+        menuTab.add(keywords);
+        menuTab.add(filters);
+        menuTab.add(clickToView);
+        menuTab.add(priceFilter);
+        menuTab.add(brandFilter);
+        menuTab.add(prodFilter);
+        menuTab.add(stockFilter);
+        menuTab.add(searchBar);
         menuTab.add(inventoryPanel);
         WIN.add(menuTab);
         menuTab.revalidate();
@@ -442,7 +496,7 @@ public class Inventory implements ActionListener {
         if (click.getActionCommand().equals("Edit Products")) {
             editProds();
         } else if (click.getActionCommand().equals("Search Products")) {
-            searchProds();
+            searchProds(products);
         } else if (click.getSource() == backToOptions) {
             try {
                 if (errorWindow != null) {
@@ -1024,6 +1078,60 @@ public class Inventory implements ActionListener {
             }
             prodToUpdate.updateSizes(selectedSizes);
             updateProdFile();
+        } else if (click.getActionCommand().equals("Search")) {
+            ArrayList<Product> searchResults = new ArrayList<Product>();
+
+            String prodType = prodFilter.getSelectedItem().toString();
+            String brandType = brandFilter.getSelectedItem().toString();
+            String stockOption = stockFilter.getSelectedItem().toString();
+            String priceRange = priceFilter.getSelectedItem().toString();
+            String searchTerm = searchBar.getText();
+            
+            //Search Filters
+            if (priceRange.equals("$300+")) {
+                System.out.println("yur");
+            } else if (!priceRange.equals("Select Price Range...")) {
+                priceRange = priceRange.replace("$", "");
+                String[] prices = priceRange.split("-");
+                double minPrice = Double.parseDouble(prices[0]);
+                double maxPrice = Double.parseDouble(prices[1]);
+                for (Product prod: products) {
+                    if (minPrice <= prod.getPrice() && maxPrice >= prod.getPrice()) {
+                        searchResults.add(prod);
+                    }
+                }
+            }
+            
+            for (Product prod: products) {
+                String currProdType = prod.getClass();
+                currProdType = currProdType.substring(6, currProdType.length());
+                System.out.println(currProdType);
+                if (currProdType.equals(prodType)) {
+                    searchResults.add(prod);
+                }
+            }
+
+            //Searchbar
+            ArrayList<String> prodNames = new ArrayList<String>();
+
+            for (Product prod: products) {
+                prodNames.add(prod.getBrand() + " " + prod.getModel());
+            }
+
+            for (String name: prodNames) {
+                if (name.contains(searchTerm)) {
+                    for (Product prod: products) {
+                        String currName = prod.getBrand() + " " + prod.getModel();
+                        if (currName.equals(name) && !searchResults.contains(prod)) {
+                            searchResults.add(prod);
+                        }
+                    }
+                }
+            }
+
+            for (Product prod: searchResults) {
+                System.out.println(prod.getBrand() + " " + prod.getModel());
+            }
         }
     }
 }

@@ -77,4 +77,12 @@ public class Product {
     public void updateSizes(ArrayList<Double> newSizes) {
         this.sizes = newSizes;
     }
+
+    public Boolean checkStock() {
+        if (this.quantity > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
