@@ -21,7 +21,7 @@ public class Inventory implements ActionListener {
     private File currFile;
     private JTextField brandText, modelText, priceText, horizontalTensionText, verticalTensionText, gripSizeText, weightText, quantityText, newPriceText, newQuantityText, searchBar; 
     private String imgName;
-    private JButton racquetDoneButton, backToOptions, backToEditProds, shoeDoneButton, backToUpdateProd, updatePriceButton, updateQuantityButton, updateSizeButton;
+    private JButton racquetDoneButton, backToOptions, backToEditProds, shoeDoneButton, backToUpdateProd, updatePriceButton, updateQuantityButton, updateSizeButton, backToSearchProds;
     private JTextArea descriptionText;
     private ArrayList<ProdCheckbox> checkBoxes, selectedBoxes;
     private ArrayList<JCheckBox> sizeCheckBoxes, updateSizeCheckBoxes;
@@ -633,6 +633,8 @@ public class Inventory implements ActionListener {
 
         if (prodType.equals("Racquet")) {
             
+            backToSearchProds = new JButton("Back");
+            //backToSearchProds.setBounds(x, y, width, height);
         }
     }
 
@@ -781,7 +783,6 @@ public class Inventory implements ActionListener {
     public void newRacquet() {
         
         newProdPanel.removeAll();
-        ArrayList<obj> widgets = new ArrayList<>();
 
         JLabel brandLabel = new JLabel("Brand:");
         brandLabel.setBounds(150, 180, 100, 20);
@@ -1088,9 +1089,15 @@ public class Inventory implements ActionListener {
                 newProdPanel.add(backToEditProds);
                 newProdPanel.revalidate();
                 newProdPanel.repaint();
-
             }
-
+        } else if (click.getActionCommand().equals("Reset Image")) {
+            ImageIcon defaultImgIcon = new ImageIcon("Add Image.png");
+            Image defaultImg = defaultImgIcon.getImage();
+            Image resizedDefaultImg = defaultImg.getScaledInstance(350, 250, Image.SCALE_SMOOTH);
+            ImageIcon resizedDefaultIcon = new ImageIcon(resizedDefaultImg);
+            
+            imgLabel.setIcon(resizedDefaultIcon);
+            currFile = null;
         } else if (click.getActionCommand().equals("Add Image")) {
             if (errorWindow != null) {
                 errorWindow.dispose();

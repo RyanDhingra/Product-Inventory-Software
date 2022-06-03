@@ -10,7 +10,7 @@ public class ErrorWindow extends JFrame{
 
         setTitle("ERROR");
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); //extend jframe
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(250, 70);
         setLayout(null);
         setVisible(true);
