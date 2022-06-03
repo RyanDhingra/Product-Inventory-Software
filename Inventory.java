@@ -1,4 +1,3 @@
-import javax.naming.spi.DirStateFactory.Result;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -8,10 +7,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.ObjectInputStream.GetField;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.security.DrbgParameters.Reseed;
 
 public class Inventory implements ActionListener {
     
@@ -363,11 +360,11 @@ public class Inventory implements ActionListener {
 
         for (Product prod: products) {
             ProdCheckbox prodSelectBox = new ProdCheckbox(prod.getBrand() + " " + prod.getModel(), prod);
-            prodSelectBox.setBounds(0, yValue, 1000, 20);
+            prodSelectBox.setBounds(0, yValue, 1000, 25);
             prodSelectBox.setFocusable(false);
             checkBoxes.add(prodSelectBox);
             scrollPanel.add(prodSelectBox);
-            yValue += 20;
+            yValue += 25;
         }
         
         inventoryPanel.add(BorderLayout.CENTER, new JScrollPane(scrollPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
@@ -394,7 +391,7 @@ public class Inventory implements ActionListener {
         menuTab.setBackground(Color.cyan);
 
         backToOptions = new JButton("Back");
-        backToOptions.setBounds(410, 110, 80, 20);
+        backToOptions.setBounds(238, 110, 150, 20);
         backToOptions.addActionListener(this);
 
         JLabel keywords = new JLabel("Enter Keywords:");
@@ -416,7 +413,7 @@ public class Inventory implements ActionListener {
         stockFilter.setBounds(705, 50, 160, 25);
         stockFilter.addActionListener(this);
 
-        String[] priceRanges = {"Select Price Range...", "$0 - $49", "$50 - $99", "$100 - $149", "$150 - $199", "$200 - $249", "$250 - $299", "$300+"};
+        String[] priceRanges = {"Select Price Range...", "$0.00 - $49.99", "$50.00 - $99.99", "$100.00 - $149.99", "$150.00 - $199.99", "$200.00 - $249.99", "$250.00 - $299.99", "$300.00+"};
         priceFilter = new JComboBox(priceRanges);
         priceFilter.setBounds(510, 50, 160, 25);
         priceFilter.addActionListener(this);
@@ -443,9 +440,14 @@ public class Inventory implements ActionListener {
         brandFilter.addActionListener(this);
 
         JButton searchButton = new JButton("Search");
-        searchButton.setBounds(510, 110, 80, 20);
+        searchButton.setBounds(418, 110, 150, 20);
         searchButton.addActionListener(this);
 
+        JButton clearFilters = new JButton("Clear Search");
+        clearFilters.setBounds(598, 110, 150, 20);
+        clearFilters.addActionListener(this);
+
+        menuTab.add(clearFilters);
         menuTab.add(backToOptions);
         menuTab.add(searchButton);
 
@@ -465,12 +467,12 @@ public class Inventory implements ActionListener {
         for (Product prod: products) {
             ProdButton viewProdButton = new ProdButton(prod.getBrand() + " " + prod.getModel(), prod);
             viewProdButton.addActionListener(this);
-            viewProdButton.setBounds(0, yValue, 969, 20);
+            viewProdButton.setBounds(0, yValue, 969, 25);
             viewProdButton.setFocusable(false);
             viewProdButton.setHorizontalAlignment(SwingConstants.LEFT);
             viewButtons.add(viewProdButton);
             scrollPanel.add(viewProdButton);
-            yValue += 20;
+            yValue += 25;
         }
         
         inventoryPanel.add(BorderLayout.CENTER, new JScrollPane(scrollPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
@@ -490,6 +492,543 @@ public class Inventory implements ActionListener {
         inventoryPanel.repaint();
         scrollPanel.revalidate();
         scrollPanel.repaint();
+    }
+
+    public void search() {
+
+        ArrayList<Product> prodTypeFiltered = new ArrayList<Product>();
+        ArrayList<Product> brandTypeFiltered = new ArrayList<Product>();
+        ArrayList<Product> priceRangeFiltered = new ArrayList<Product>();
+        ArrayList<Product> stockOptionFiltered = new ArrayList<Product>();
+        ArrayList<Product> searchTermFiltered = new ArrayList<Product>();
+
+        String prodType = prodFilter.getSelectedItem().toString();
+        String brandType = brandFilter.getSelectedItem().toString();
+        String stockOption = stockFilter.getSelectedItem().toString();
+        String priceRange = priceFilter.getSelectedItem().toString();
+        String searchTerm = searchBar.getText();
+        
+        //Search Filters
+
+        //Product Type Filter
+        if (!prodType.equals("Select Product Type...")) {
+            for (Product prod: products) {
+                String currProdType = prod.getClass().toString();
+                currProdType = currProdType.substring(6, currProdType.length());
+                if (currProdType.equals(prodType)) {
+                    prodTypeFiltered.add(prod);
+                }
+            }
+        } else {
+            for (Product prod: products) {
+                prodTypeFiltered.add(prod);
+            }
+        }
+
+        //Brand Type Filter
+        if (!brandType.equals("Select Brand...")) {
+            for (Product prod: prodTypeFiltered) {
+                String currBrandType = prod.getBrand();
+                if (currBrandType.equals(brandType)) {
+                    brandTypeFiltered.add(prod);
+                }
+            }
+        } else {
+            for (Product prod: prodTypeFiltered) {
+                brandTypeFiltered.add(prod);
+            }
+        }
+
+        //Price Range Filter - fix intervals: e.g. 249.99 is not found
+        if (priceRange.equals("$300.00+")) {
+            double minPrice = 300.0;
+            for (Product prod: brandTypeFiltered) {
+                if (prod.getPrice() >= minPrice) {
+                    priceRangeFiltered.add(prod);
+                }
+            }
+        } else if (!priceRange.equals("Select Price Range...")) {
+            priceRange = priceRange.replace("$", "");
+            String[] prices = priceRange.split("-");
+            double minPrice = Double.parseDouble(prices[0]);
+            double maxPrice = Double.parseDouble(prices[1]);
+            for (Product prod: brandTypeFiltered) {
+                if (minPrice <= prod.getPrice() && maxPrice >= prod.getPrice()) {
+                    priceRangeFiltered.add(prod);
+                }
+            }
+        } else {
+            for (Product prod: brandTypeFiltered) {
+                priceRangeFiltered.add(prod);
+            }
+        }
+        
+        //Availability Filter
+        if (stockOption.equals("Select Availability...")) {
+            for (Product prod: priceRangeFiltered) {
+                stockOptionFiltered.add(prod);
+            }
+        } else if (stockOption.equals("In Stock")) {
+            for (Product prod: priceRangeFiltered) {
+                if (prod.getQuantity() > 0) {
+                    stockOptionFiltered.add(prod);
+                }
+            }
+        } else if (stockOption.equals("Out of Stock")) {
+            for (Product prod: priceRangeFiltered) {
+                if (prod.getQuantity() == 0) {
+                    stockOptionFiltered.add(prod);
+                }
+            }
+        }
+
+        //Searchbar
+        ArrayList<String> prodNames = new ArrayList<String>();
+
+        for (Product prod: stockOptionFiltered) {
+            prodNames.add(prod.getBrand() + " " + prod.getModel());
+        }
+
+        if (searchTerm.equals("")) {
+            for (Product prod: stockOptionFiltered) {
+                searchTermFiltered.add(prod);
+            }
+        } else {
+            for (String name: prodNames) {
+                if (name.contains(searchTerm)) {
+                    for (Product prod: products) {
+                        String currName = prod.getBrand() + " " + prod.getModel();
+                        if (currName.equals(name) && !searchTermFiltered.contains(prod)) {
+                            searchTermFiltered.add(prod);
+                        }
+                    }
+                }
+            }
+        }
+
+        scrollPanel.removeAll();
+        viewButtons.clear();
+        int yValue = 0;
+
+        for (Product prod: searchTermFiltered) {
+            ProdButton viewProdButton = new ProdButton(prod.getBrand() + " " + prod.getModel(), prod);
+            viewProdButton.addActionListener(this);
+            viewProdButton.setBounds(0, yValue, 969, 25);
+            viewProdButton.setFocusable(false);
+            viewProdButton.setHorizontalAlignment(SwingConstants.LEFT);
+            viewButtons.add(viewProdButton);
+            scrollPanel.add(viewProdButton);
+            yValue += 25;
+        } 
+
+        scrollPanel.revalidate();
+        scrollPanel.repaint();
+    }
+
+    public void viewProd(Product prodToView) {
+
+        menuTab.setVisible(false);
+        String prodType = prodToView.getClass().toString();
+        prodType = prodType.substring(6, prodType.length());
+
+        if (prodType.equals("Racquet")) {
+            
+        }
+    }
+
+    public void newShoe() {
+        
+        newProdPanel.removeAll();
+        sizeCheckBoxes = new ArrayList<JCheckBox>();
+
+        JLabel brandLabel = new JLabel("Brand:");
+        brandLabel.setBounds(150, 180, 100, 20);
+        brandText = new JTextField(20);
+        brandText.setBounds(150, 200, 300, 20);
+
+        JLabel modelLabel = new JLabel("Model:");
+        modelLabel.setBounds(150, 230, 100, 20);
+        modelText = new JTextField(20);
+        modelText.setBounds(150, 250, 300, 20);
+
+        JLabel priceLabel = new JLabel("Price:");
+        priceLabel.setBounds(150, 280, 100, 20);
+        priceText = new JTextField(20);
+        priceText.setBounds(160, 300, 100, 20);
+        JLabel dollarSign = new JLabel("$");
+        dollarSign.setBounds(150, 300, 150, 20);
+
+        JLabel quantityLabel = new JLabel("Quantity:");
+        quantityLabel.setBounds(350, 280, 100, 20);
+        quantityText = new JTextField(20);
+        quantityText.setBounds(350, 300, 100, 20);
+
+        JLabel genderLabel = new JLabel("Gender:");
+        genderLabel.setBounds(150, 330, 100, 20);
+        String[] genders = {"Select Gender...","Mens","Womens","Unisex"};
+        prodGender = new JComboBox(genders);
+        prodGender.setBounds(150, 350, 150, 20);
+
+        JLabel sizeLabel = new JLabel("Select Sizes:");
+        sizeLabel.setBounds(150, 380, 150, 20);
+
+        JCheckBox size7 = new JCheckBox("7");
+        size7.setBounds(150, 410, 50, 20);
+        sizeCheckBoxes.add(size7);
+        
+        JCheckBox size7_5 = new JCheckBox("7.5");
+        size7_5.setBounds(150, 430, 50, 20);
+        sizeCheckBoxes.add(size7_5);
+        
+        JCheckBox size8 = new JCheckBox("8");
+        size8.setBounds(150, 450, 50, 20);
+        sizeCheckBoxes.add(size8);
+        
+        JCheckBox size8_5 = new JCheckBox("8.5");
+        size8_5.setBounds(250, 410, 50, 20);
+        sizeCheckBoxes.add(size8_5);
+        
+        JCheckBox size9 = new JCheckBox("9");
+        size9.setBounds(250, 430, 50, 20);
+        sizeCheckBoxes.add(size9);
+        
+        JCheckBox size9_5 = new JCheckBox("9.5");
+        size9_5.setBounds(250, 450, 50, 20);
+        sizeCheckBoxes.add(size9_5);
+        
+        JCheckBox size10 = new JCheckBox("10");
+        size10.setBounds(350, 410, 50, 20);
+        sizeCheckBoxes.add(size10);
+        
+        JCheckBox size10_5 = new JCheckBox("10.5");
+        size10_5.setBounds(350, 430, 50, 20);
+        sizeCheckBoxes.add(size10_5);
+        
+        JCheckBox size11 = new JCheckBox("11");
+        size11.setBounds(350, 450, 50, 20);
+        sizeCheckBoxes.add(size11);
+
+        JLabel descriptionLabel = new JLabel("Description:");
+        descriptionLabel.setBounds(150, 480, 300, 20);
+        
+        descriptionText = new JTextArea();
+        descriptionText.setLineWrap(true);
+        descriptionText.setWrapStyleWord(true);
+        descriptionText.setBounds(150, 500, 700, 150);
+        descriptionText.setBorder(BorderFactory.createLineBorder(Color.black, 1));
+        descriptionText.addKeyListener(new KeyAdapter() {
+            public void keyPressed(KeyEvent keydown) {
+                int maxChars = 648;
+                int charCount = descriptionText.getText().length() + 1;
+
+                if (charCount >= maxChars) {
+                    descriptionText.setText(descriptionText.getText().substring(0, 647));
+                }
+            }
+        });
+
+        JButton addImage = new JButton("Add Image");
+        addImage.setBounds(545, 450, 120, 20);
+        addImage.addActionListener(this);
+
+        JButton resetImage = new JButton("Reset Image");
+        resetImage.setBounds(695, 450, 120, 20);
+        resetImage.addActionListener(this);
+
+        shoeDoneButton = new JButton("Done");
+        shoeDoneButton.setBounds(460, 700, 80, 20);
+        shoeDoneButton.addActionListener(this);
+        
+        ImageIcon defaultImgIcon = new ImageIcon("Add Image.png");
+        Image defaultImg = defaultImgIcon.getImage();
+        Image resizedDefaultImg = defaultImg.getScaledInstance(350, 250, Image.SCALE_SMOOTH);
+        ImageIcon resizedDefaultIcon = new ImageIcon(resizedDefaultImg);
+        
+        imgLabel = new JLabel("");
+        imgLabel.setIcon(resizedDefaultIcon);
+        imgLabel.setBounds(505, 180, 350, 250);
+
+        newProdPanel.add(brandText);
+        newProdPanel.add(brandLabel);
+        newProdPanel.add(modelText);
+        newProdPanel.add(modelLabel);
+        newProdPanel.add(priceText);
+        newProdPanel.add(priceLabel);
+        newProdPanel.add(dollarSign);
+        newProdPanel.add(descriptionText);
+        newProdPanel.add(descriptionLabel);
+        newProdPanel.add(addImage);
+        newProdPanel.add(resetImage);
+        newProdPanel.add(shoeDoneButton);
+        newProdPanel.add(imgLabel);
+        newProdPanel.add(prodType);
+        newProdPanel.add(title);
+        newProdPanel.add(backToEditProds);
+        newProdPanel.add(quantityLabel);
+        newProdPanel.add(quantityText);
+        newProdPanel.add(genderLabel);
+        newProdPanel.add(prodGender);
+        newProdPanel.add(sizeLabel);
+        
+        for (JCheckBox sizeCheckBox: sizeCheckBoxes) {
+            newProdPanel.add(sizeCheckBox);
+        }
+
+        newProdPanel.revalidate();
+        newProdPanel.repaint();
+    }
+
+    public void newRacquet() {
+        
+        newProdPanel.removeAll();
+        ArrayList<obj> widgets = new ArrayList<>();
+
+        JLabel brandLabel = new JLabel("Brand:");
+        brandLabel.setBounds(150, 180, 100, 20);
+        brandText = new JTextField(20);
+        brandText.setBounds(150, 200, 300, 20);
+
+        JLabel modelLabel = new JLabel("Model:");
+        modelLabel.setBounds(150, 230, 100, 20);
+        modelText = new JTextField(20);
+        modelText.setBounds(150, 250, 300, 20);
+
+        JLabel priceLabel = new JLabel("Price:");
+        priceLabel.setBounds(150, 280, 100, 20);
+        priceText = new JTextField(20);
+        priceText.setBounds(160, 300, 100, 20);
+        JLabel dollarSign = new JLabel("$");
+        dollarSign.setBounds(150, 300, 150, 20);
+
+        JLabel quantityLabel = new JLabel("Quantity:");
+        quantityLabel.setBounds(350, 280, 100, 20);
+        quantityText = new JTextField(20);
+        quantityText.setBounds(350, 300, 100, 20);
+
+        JLabel maxTensionLabel = new JLabel("Maximum Tension:");
+        maxTensionLabel.setBounds(150, 330, 150, 20);
+
+        JLabel horizontalTensionLabel = new JLabel("H:");
+        horizontalTensionLabel.setBounds(150, 350, 20, 20);
+        JLabel horizontalLBS = new JLabel("lbs");
+        horizontalLBS.setBounds(195, 350, 20, 20);
+        horizontalTensionText = new JTextField(20);
+        horizontalTensionText.setBounds(165, 350, 30, 20);
+        
+        JLabel verticalTensionLabel = new JLabel("V:");
+        verticalTensionLabel.setBounds(240, 350, 20, 20);
+        JLabel verticalLBS = new JLabel("lbs");
+        verticalLBS.setBounds(285, 350, 20, 20);
+        verticalTensionText = new JTextField(20);
+        verticalTensionText.setBounds(255, 350, 30, 20);
+
+        JLabel gripSizeLabel = new JLabel("Grip Size:");
+        gripSizeLabel.setBounds(150, 380, 150, 20);
+        gripSizeText = new JTextField(20);
+        gripSizeText.setBounds(150, 400, 150, 20);
+
+        JLabel weightLabel = new JLabel("Weight:");
+        weightLabel.setBounds(150, 430, 150, 20);
+        weightText = new JTextField(20);
+        weightText.setBounds(150, 450, 150, 20);
+
+        JLabel descriptionLabel = new JLabel("Description:");
+        descriptionLabel.setBounds(150, 480, 300, 20);
+        
+        descriptionText = new JTextArea();
+        descriptionText.setLineWrap(true);
+        descriptionText.setWrapStyleWord(true);
+        descriptionText.setBounds(150, 500, 700, 150);
+        descriptionText.setBorder(BorderFactory.createLineBorder(Color.black, 1));
+        descriptionText.addKeyListener(new KeyAdapter() {
+            public void keyPressed(KeyEvent keydown) {
+                int maxChars = 648;
+                int charCount = descriptionText.getText().length() + 1;
+
+                if (charCount >= maxChars) {
+                    descriptionText.setText(descriptionText.getText().substring(0, 647));
+                }
+            }
+        });
+
+        JButton addImage = new JButton("Add Image");
+        addImage.setBounds(545, 450, 120, 20);
+        addImage.addActionListener(this);
+
+        JButton resetImage = new JButton("Reset Image");
+        resetImage.setBounds(695, 450, 120, 20);
+        resetImage.addActionListener(this);
+
+        racquetDoneButton = new JButton("Done");
+        racquetDoneButton.setBounds(460, 700, 80, 20);
+        racquetDoneButton.addActionListener(this);
+        
+        ImageIcon defaultImgIcon = new ImageIcon("Add Image.png");
+        Image defaultImg = defaultImgIcon.getImage();
+        Image resizedDefaultImg = defaultImg.getScaledInstance(350, 250, Image.SCALE_SMOOTH);
+        ImageIcon resizedDefaultIcon = new ImageIcon(resizedDefaultImg);
+        
+        imgLabel = new JLabel("");
+        imgLabel.setIcon(resizedDefaultIcon);
+        imgLabel.setBounds(505, 180, 350, 250);
+
+        newProdPanel.add(brandText);
+        newProdPanel.add(brandLabel);
+        newProdPanel.add(modelText);
+        newProdPanel.add(modelLabel);
+        newProdPanel.add(priceText);
+        newProdPanel.add(priceLabel);
+        newProdPanel.add(dollarSign);
+        newProdPanel.add(horizontalTensionText);
+        newProdPanel.add(horizontalTensionLabel);
+        newProdPanel.add(verticalTensionText);
+        newProdPanel.add(verticalTensionLabel);
+        newProdPanel.add(maxTensionLabel);
+        newProdPanel.add(gripSizeText);
+        newProdPanel.add(gripSizeLabel);
+        newProdPanel.add(weightText);
+        newProdPanel.add(weightLabel);
+        newProdPanel.add(descriptionText);
+        newProdPanel.add(descriptionLabel);
+        newProdPanel.add(addImage);
+        newProdPanel.add(resetImage);
+        newProdPanel.add(racquetDoneButton);
+        newProdPanel.add(imgLabel);
+        newProdPanel.add(horizontalLBS);
+        newProdPanel.add(verticalLBS);
+        newProdPanel.add(quantityLabel);
+        newProdPanel.add(quantityText);
+        newProdPanel.add(prodType);
+        newProdPanel.add(title);
+        newProdPanel.add(backToEditProds);
+        newProdPanel.revalidate();
+        newProdPanel.repaint();
+    }
+
+    public void updatePrice() {
+        updateProdPanel.removeAll();
+
+        JLabel newPriceLabel = new JLabel("Enter new price:");
+        newPriceLabel.setBounds(145, 120, 200, 20);
+
+        newPriceText = new JTextField(20);
+        newPriceText.setBounds(105, 160, 190, 20);
+
+        JLabel dollarSign = new JLabel("$");
+        dollarSign.setBounds(95, 160, 10, 20);
+
+        updatePriceButton = new JButton("Done");
+        updatePriceButton.setBounds(215, 220, 80, 20);
+        updatePriceButton.addActionListener(this);
+
+        backToUpdateProd = new JButton("Back");
+        backToUpdateProd.setBounds(95, 220, 80, 20);
+        backToUpdateProd.addActionListener(this);
+
+        updateProdPanel.add(backToUpdateProd);
+        updateProdPanel.add(updatePriceButton);
+        updateProdPanel.add(newPriceLabel);
+        updateProdPanel.add(newPriceText);
+        updateProdPanel.add(updatePriceButton);
+        updateProdPanel.add(title);
+        updateProdPanel.add(prodLabel);
+        updateProdPanel.add(dollarSign);
+
+        updateProdPanel.revalidate();
+        updateProdPanel.repaint();
+    }
+
+    public void updateQuantity() {
+        updateProdPanel.removeAll();
+
+        JLabel newQuantityLabel = new JLabel("Enter new quantity:");
+        newQuantityLabel.setBounds(140, 120, 200, 20);
+
+        newQuantityText = new JTextField(20);
+        newQuantityText.setBounds(95, 160, 200, 20);
+
+        updateQuantityButton = new JButton("Done");
+        updateQuantityButton.setBounds(215, 220, 80, 20);
+        updateQuantityButton.addActionListener(this);
+
+        backToUpdateProd = new JButton("Back");
+        backToUpdateProd.setBounds(95, 220, 80, 20);
+        backToUpdateProd.addActionListener(this);
+        
+        updateProdPanel.add(backToUpdateProd);
+        updateProdPanel.add(updateQuantityButton);
+        updateProdPanel.add(newQuantityLabel);
+        updateProdPanel.add(newQuantityText);
+        updateProdPanel.add(title);
+        updateProdPanel.add(prodLabel);
+
+        updateProdPanel.revalidate();
+        updateProdPanel.repaint();
+    }
+
+    public void updateSizes() {
+        updateProdPanel.removeAll();
+        updateSizeCheckBoxes = new ArrayList<JCheckBox>();
+
+        JLabel newSizeLabel = new JLabel("Select new sizes:");
+        newSizeLabel.setBounds(140, 120, 200, 20);
+
+        JCheckBox size7 = new JCheckBox("7");
+        size7.setBounds(70, 160, 50, 20);
+        updateSizeCheckBoxes.add(size7);
+        
+        JCheckBox size7_5 = new JCheckBox("7.5");
+        size7_5.setBounds(70, 180, 50, 20);
+        updateSizeCheckBoxes.add(size7_5);
+        
+        JCheckBox size8 = new JCheckBox("8");
+        size8.setBounds(70, 200, 50, 20);
+        updateSizeCheckBoxes.add(size8);
+        
+        JCheckBox size8_5 = new JCheckBox("8.5");
+        size8_5.setBounds(170, 160, 50, 20);
+        updateSizeCheckBoxes.add(size8_5);
+        
+        JCheckBox size9 = new JCheckBox("9");
+        size9.setBounds(170, 180, 50, 20);
+        updateSizeCheckBoxes.add(size9);
+        
+        JCheckBox size9_5 = new JCheckBox("9.5");
+        size9_5.setBounds(170, 200, 50, 20);
+        updateSizeCheckBoxes.add(size9_5);
+        
+        JCheckBox size10 = new JCheckBox("10");
+        size10.setBounds(270, 160, 50, 20);
+        updateSizeCheckBoxes.add(size10);
+        
+        JCheckBox size10_5 = new JCheckBox("10.5");
+        size10_5.setBounds(270, 180, 50, 20);
+        updateSizeCheckBoxes.add(size10_5);
+        
+        JCheckBox size11 = new JCheckBox("11");
+        size11.setBounds(270, 200, 50, 20);
+        updateSizeCheckBoxes.add(size11);
+
+        updateSizeButton = new JButton("Done");
+        updateSizeButton.setBounds(215, 240, 80, 20);
+        updateSizeButton.addActionListener(this);
+
+        backToUpdateProd = new JButton("Back");
+        backToUpdateProd.setBounds(95, 240, 80, 20);
+        backToUpdateProd.addActionListener(this);
+
+        for (JCheckBox sizeCheckBox: updateSizeCheckBoxes) {
+            updateProdPanel.add(sizeCheckBox);
+        }
+
+        updateProdPanel.add(backToUpdateProd);
+        updateProdPanel.add(updateSizeButton);
+        updateProdPanel.add(newSizeLabel);
+        updateProdPanel.add(title);
+        updateProdPanel.add(prodLabel);
+
+        updateProdPanel.revalidate();
+        updateProdPanel.repaint();
     }
 
     @Override
@@ -538,266 +1077,15 @@ public class Inventory implements ActionListener {
             editProds();
         } else if (click.getSource() == prodType) {
             if (prodType.getSelectedItem().equals("Racquets")) {
-
-                newProdPanel.removeAll();
-
-                JLabel brandLabel = new JLabel("Brand:");
-                brandLabel.setBounds(150, 180, 100, 20);
-                brandText = new JTextField(20);
-                brandText.setBounds(150, 200, 300, 20);
-
-                JLabel modelLabel = new JLabel("Model:");
-                modelLabel.setBounds(150, 230, 100, 20);
-                modelText = new JTextField(20);
-                modelText.setBounds(150, 250, 300, 20);
-
-                JLabel priceLabel = new JLabel("Price:");
-                priceLabel.setBounds(150, 280, 100, 20);
-                priceText = new JTextField(20);
-                priceText.setBounds(160, 300, 100, 20);
-                JLabel dollarSign = new JLabel("$");
-                dollarSign.setBounds(150, 300, 150, 20);
-
-                JLabel quantityLabel = new JLabel("Quantity:");
-                quantityLabel.setBounds(350, 280, 100, 20);
-                quantityText = new JTextField(20);
-                quantityText.setBounds(350, 300, 100, 20);
-
-                JLabel maxTensionLabel = new JLabel("Maximum Tension:");
-                maxTensionLabel.setBounds(150, 330, 150, 20);
-
-                JLabel horizontalTensionLabel = new JLabel("H:");
-                horizontalTensionLabel.setBounds(150, 350, 20, 20);
-                JLabel horizontalLBS = new JLabel("lbs");
-                horizontalLBS.setBounds(195, 350, 20, 20);
-                horizontalTensionText = new JTextField(20);
-                horizontalTensionText.setBounds(165, 350, 30, 20);
-                
-                JLabel verticalTensionLabel = new JLabel("V:");
-                verticalTensionLabel.setBounds(240, 350, 20, 20);
-                JLabel verticalLBS = new JLabel("lbs");
-                verticalLBS.setBounds(285, 350, 20, 20);
-                verticalTensionText = new JTextField(20);
-                verticalTensionText.setBounds(255, 350, 30, 20);
-
-                JLabel gripSizeLabel = new JLabel("Grip Size:");
-                gripSizeLabel.setBounds(150, 380, 150, 20);
-                gripSizeText = new JTextField(20);
-                gripSizeText.setBounds(150, 400, 150, 20);
-
-                JLabel weightLabel = new JLabel("Weight:");
-                weightLabel.setBounds(150, 430, 150, 20);
-                weightText = new JTextField(20);
-                weightText.setBounds(150, 450, 150, 20);
-
-                JLabel descriptionLabel = new JLabel("Description:");
-                descriptionLabel.setBounds(150, 480, 300, 20);
-                
-                descriptionText = new JTextArea();
-                descriptionText.setLineWrap(true);
-                descriptionText.setWrapStyleWord(true);
-                descriptionText.setBounds(150, 500, 700, 150);
-                descriptionText.setBorder(BorderFactory.createLineBorder(Color.black, 1));
-                descriptionText.addKeyListener(new KeyAdapter() {
-                    public void keyPressed(KeyEvent keydown) {
-                        int maxChars = 648;
-                        int charCount = descriptionText.getText().length() + 1;
-
-                        if (charCount >= maxChars) {
-                            descriptionText.setText(descriptionText.getText().substring(0, 647));
-                        }
-                    }
-                });
-
-                JButton addImage = new JButton("Add Image");
-                addImage.setBounds(630, 450, 100, 20);
-                addImage.addActionListener(this);
-
-                racquetDoneButton = new JButton("Done");
-                racquetDoneButton.setBounds(460, 700, 80, 20);
-                racquetDoneButton.addActionListener(this);
-                
-                ImageIcon defaultImgIcon = new ImageIcon("Add Image.png");
-                Image defaultImg = defaultImgIcon.getImage();
-                Image resizedDefaultImg = defaultImg.getScaledInstance(350, 250, Image.SCALE_SMOOTH);
-                ImageIcon resizedDefaultIcon = new ImageIcon(resizedDefaultImg);
-                
-                imgLabel = new JLabel("");
-                imgLabel.setIcon(resizedDefaultIcon);
-                imgLabel.setBounds(505, 180, 350, 250);
-
-                newProdPanel.add(brandText);
-                newProdPanel.add(brandLabel);
-                newProdPanel.add(modelText);
-                newProdPanel.add(modelLabel);
-                newProdPanel.add(priceText);
-                newProdPanel.add(priceLabel);
-                newProdPanel.add(dollarSign);
-                newProdPanel.add(horizontalTensionText);
-                newProdPanel.add(horizontalTensionLabel);
-                newProdPanel.add(verticalTensionText);
-                newProdPanel.add(verticalTensionLabel);
-                newProdPanel.add(maxTensionLabel);
-                newProdPanel.add(gripSizeText);
-                newProdPanel.add(gripSizeLabel);
-                newProdPanel.add(weightText);
-                newProdPanel.add(weightLabel);
-                newProdPanel.add(descriptionText);
-                newProdPanel.add(descriptionLabel);
-                newProdPanel.add(addImage);
-                newProdPanel.add(racquetDoneButton);
-                newProdPanel.add(imgLabel);
-                newProdPanel.add(horizontalLBS);
-                newProdPanel.add(verticalLBS);
-                newProdPanel.add(quantityLabel);
-                newProdPanel.add(quantityText);
-                newProdPanel.add(prodType);
-                newProdPanel.add(title);
-                newProdPanel.add(backToEditProds);
-                newProdPanel.revalidate();
-                newProdPanel.repaint();
-
+                newRacquet();
             } else if (prodType.getSelectedItem().equals("Shoes")) {
-
-                newProdPanel.removeAll();
-                sizeCheckBoxes = new ArrayList<JCheckBox>();
-
-                JLabel brandLabel = new JLabel("Brand:");
-                brandLabel.setBounds(150, 180, 100, 20);
-                brandText = new JTextField(20);
-                brandText.setBounds(150, 200, 300, 20);
-
-                JLabel modelLabel = new JLabel("Model:");
-                modelLabel.setBounds(150, 230, 100, 20);
-                modelText = new JTextField(20);
-                modelText.setBounds(150, 250, 300, 20);
-
-                JLabel priceLabel = new JLabel("Price:");
-                priceLabel.setBounds(150, 280, 100, 20);
-                priceText = new JTextField(20);
-                priceText.setBounds(160, 300, 100, 20);
-                JLabel dollarSign = new JLabel("$");
-                dollarSign.setBounds(150, 300, 150, 20);
-
-                JLabel quantityLabel = new JLabel("Quantity:");
-                quantityLabel.setBounds(350, 280, 100, 20);
-                quantityText = new JTextField(20);
-                quantityText.setBounds(350, 300, 100, 20);
-
-                JLabel genderLabel = new JLabel("Gender:");
-                genderLabel.setBounds(150, 330, 100, 20);
-                String[] genders = {"Select Gender...","Mens","Womens","Unisex"};
-                prodGender = new JComboBox(genders);
-                prodGender.setBounds(150, 350, 150, 20);
-
-                JLabel sizeLabel = new JLabel("Select Sizes:");
-                sizeLabel.setBounds(150, 380, 150, 20);
-
-                JCheckBox size7 = new JCheckBox("7");
-                size7.setBounds(150, 410, 50, 20);
-                sizeCheckBoxes.add(size7);
-                
-                JCheckBox size7_5 = new JCheckBox("7.5");
-                size7_5.setBounds(150, 430, 50, 20);
-                sizeCheckBoxes.add(size7_5);
-                
-                JCheckBox size8 = new JCheckBox("8");
-                size8.setBounds(150, 450, 50, 20);
-                sizeCheckBoxes.add(size8);
-                
-                JCheckBox size8_5 = new JCheckBox("8.5");
-                size8_5.setBounds(250, 410, 50, 20);
-                sizeCheckBoxes.add(size8_5);
-                
-                JCheckBox size9 = new JCheckBox("9");
-                size9.setBounds(250, 430, 50, 20);
-                sizeCheckBoxes.add(size9);
-                
-                JCheckBox size9_5 = new JCheckBox("9.5");
-                size9_5.setBounds(250, 450, 50, 20);
-                sizeCheckBoxes.add(size9_5);
-                
-                JCheckBox size10 = new JCheckBox("10");
-                size10.setBounds(350, 410, 50, 20);
-                sizeCheckBoxes.add(size10);
-                
-                JCheckBox size10_5 = new JCheckBox("10.5");
-                size10_5.setBounds(350, 430, 50, 20);
-                sizeCheckBoxes.add(size10_5);
-                
-                JCheckBox size11 = new JCheckBox("11");
-                size11.setBounds(350, 450, 50, 20);
-                sizeCheckBoxes.add(size11);
-
-                JLabel descriptionLabel = new JLabel("Description:");
-                descriptionLabel.setBounds(150, 480, 300, 20);
-                
-                descriptionText = new JTextArea();
-                descriptionText.setLineWrap(true);
-                descriptionText.setWrapStyleWord(true);
-                descriptionText.setBounds(150, 500, 700, 150);
-                descriptionText.setBorder(BorderFactory.createLineBorder(Color.black, 1));
-                descriptionText.addKeyListener(new KeyAdapter() {
-                    public void keyPressed(KeyEvent keydown) {
-                        int maxChars = 648;
-                        int charCount = descriptionText.getText().length() + 1;
-
-                        if (charCount >= maxChars) {
-                            descriptionText.setText(descriptionText.getText().substring(0, 647));
-                        }
-                    }
-                });
-
-                JButton addImage = new JButton("Add Image");
-                addImage.setBounds(630, 450, 100, 20);
-                addImage.addActionListener(this);
-
-                shoeDoneButton = new JButton("Done");
-                shoeDoneButton.setBounds(460, 700, 80, 20);
-                shoeDoneButton.addActionListener(this);
-                
-                ImageIcon defaultImgIcon = new ImageIcon("Add Image.png");
-                Image defaultImg = defaultImgIcon.getImage();
-                Image resizedDefaultImg = defaultImg.getScaledInstance(350, 250, Image.SCALE_SMOOTH);
-                ImageIcon resizedDefaultIcon = new ImageIcon(resizedDefaultImg);
-                
-                imgLabel = new JLabel("");
-                imgLabel.setIcon(resizedDefaultIcon);
-                imgLabel.setBounds(505, 180, 350, 250);
-
-                newProdPanel.add(brandText);
-                newProdPanel.add(brandLabel);
-                newProdPanel.add(modelText);
-                newProdPanel.add(modelLabel);
-                newProdPanel.add(priceText);
-                newProdPanel.add(priceLabel);
-                newProdPanel.add(dollarSign);
-                newProdPanel.add(descriptionText);
-                newProdPanel.add(descriptionLabel);
-                newProdPanel.add(addImage);
-                newProdPanel.add(shoeDoneButton);
-                newProdPanel.add(imgLabel);
-                newProdPanel.add(prodType);
-                newProdPanel.add(title);
-                newProdPanel.add(backToEditProds);
-                newProdPanel.add(quantityLabel);
-                newProdPanel.add(quantityText);
-                newProdPanel.add(genderLabel);
-                newProdPanel.add(prodGender);
-                newProdPanel.add(sizeLabel);
-                
-                for (JCheckBox sizeCheckBox: sizeCheckBoxes) {
-                    newProdPanel.add(sizeCheckBox);
-                }
-
-                newProdPanel.revalidate();
-                newProdPanel.repaint();
-
+                newShoe();
             } else if (prodType.getSelectedItem().equals("Select Type...")) {
 
                 newProdPanel.removeAll();
                 newProdPanel.add(title);
                 newProdPanel.add(prodType);
+                newProdPanel.add(backToEditProds);
                 newProdPanel.revalidate();
                 newProdPanel.repaint();
 
@@ -940,125 +1228,11 @@ public class Inventory implements ActionListener {
                 }
             }
         } else if (click.getActionCommand().equals("Update Price")) {
-            updateProdPanel.removeAll();
-
-            JLabel newPriceLabel = new JLabel("Enter new price:");
-            newPriceLabel.setBounds(145, 120, 200, 20);
-
-            newPriceText = new JTextField(20);
-            newPriceText.setBounds(105, 160, 190, 20);
-
-            JLabel dollarSign = new JLabel("$");
-            dollarSign.setBounds(95, 160, 10, 20);
-
-            updatePriceButton = new JButton("Done");
-            updatePriceButton.setBounds(215, 220, 80, 20);
-            updatePriceButton.addActionListener(this);
-
-            backToUpdateProd = new JButton("Back");
-            backToUpdateProd.setBounds(95, 220, 80, 20);
-            backToUpdateProd.addActionListener(this);
-
-            updateProdPanel.add(backToUpdateProd);
-            updateProdPanel.add(updatePriceButton);
-            updateProdPanel.add(newPriceLabel);
-            updateProdPanel.add(newPriceText);
-            updateProdPanel.add(updatePriceButton);
-            updateProdPanel.add(title);
-            updateProdPanel.add(prodLabel);
-            updateProdPanel.add(dollarSign);
-
-            updateProdPanel.revalidate();
-            updateProdPanel.repaint();
+            updatePrice();
         } else if (click.getActionCommand().equals("Update Quantity")) {
-            updateProdPanel.removeAll();
-
-            JLabel newQuantityLabel = new JLabel("Enter new quantity:");
-            newQuantityLabel.setBounds(140, 120, 200, 20);
-
-            newQuantityText = new JTextField(20);
-            newQuantityText.setBounds(95, 160, 200, 20);
-
-            updateQuantityButton = new JButton("Done");
-            updateQuantityButton.setBounds(215, 220, 80, 20);
-            updateQuantityButton.addActionListener(this);
-
-            backToUpdateProd = new JButton("Back");
-            backToUpdateProd.setBounds(95, 220, 80, 20);
-            backToUpdateProd.addActionListener(this);
-            
-            updateProdPanel.add(backToUpdateProd);
-            updateProdPanel.add(updateQuantityButton);
-            updateProdPanel.add(newQuantityLabel);
-            updateProdPanel.add(newQuantityText);
-            updateProdPanel.add(title);
-            updateProdPanel.add(prodLabel);
-
-            updateProdPanel.revalidate();
-            updateProdPanel.repaint();
+            updateQuantity();
         } else if (click.getActionCommand().equals("Update Sizes")) {
-            updateProdPanel.removeAll();
-            updateSizeCheckBoxes = new ArrayList<JCheckBox>();
-
-            JLabel newSizeLabel = new JLabel("Select new sizes:");
-            newSizeLabel.setBounds(140, 120, 200, 20);
-
-            JCheckBox size7 = new JCheckBox("7");
-            size7.setBounds(70, 160, 50, 20);
-            updateSizeCheckBoxes.add(size7);
-            
-            JCheckBox size7_5 = new JCheckBox("7.5");
-            size7_5.setBounds(70, 180, 50, 20);
-            updateSizeCheckBoxes.add(size7_5);
-            
-            JCheckBox size8 = new JCheckBox("8");
-            size8.setBounds(70, 200, 50, 20);
-            updateSizeCheckBoxes.add(size8);
-            
-            JCheckBox size8_5 = new JCheckBox("8.5");
-            size8_5.setBounds(170, 160, 50, 20);
-            updateSizeCheckBoxes.add(size8_5);
-            
-            JCheckBox size9 = new JCheckBox("9");
-            size9.setBounds(170, 180, 50, 20);
-            updateSizeCheckBoxes.add(size9);
-            
-            JCheckBox size9_5 = new JCheckBox("9.5");
-            size9_5.setBounds(170, 200, 50, 20);
-            updateSizeCheckBoxes.add(size9_5);
-            
-            JCheckBox size10 = new JCheckBox("10");
-            size10.setBounds(270, 160, 50, 20);
-            updateSizeCheckBoxes.add(size10);
-            
-            JCheckBox size10_5 = new JCheckBox("10.5");
-            size10_5.setBounds(270, 180, 50, 20);
-            updateSizeCheckBoxes.add(size10_5);
-            
-            JCheckBox size11 = new JCheckBox("11");
-            size11.setBounds(270, 200, 50, 20);
-            updateSizeCheckBoxes.add(size11);
-
-            updateSizeButton = new JButton("Done");
-            updateSizeButton.setBounds(215, 240, 80, 20);
-            updateSizeButton.addActionListener(this);
-
-            backToUpdateProd = new JButton("Back");
-            backToUpdateProd.setBounds(95, 240, 80, 20);
-            backToUpdateProd.addActionListener(this);
-
-            for (JCheckBox sizeCheckBox: updateSizeCheckBoxes) {
-                updateProdPanel.add(sizeCheckBox);
-            }
-
-            updateProdPanel.add(backToUpdateProd);
-            updateProdPanel.add(updateSizeButton);
-            updateProdPanel.add(newSizeLabel);
-            updateProdPanel.add(title);
-            updateProdPanel.add(prodLabel);
-
-            updateProdPanel.revalidate();
-            updateProdPanel.repaint();
+            updateSizes();
         } else if (click.getSource() == backToUpdateProd) {
             updateProdPanel.setVisible(false);
             updateProd(prodToUpdate);
@@ -1081,128 +1255,20 @@ public class Inventory implements ActionListener {
             prodToUpdate.updateSizes(selectedSizes);
             updateProdFile();
         } else if (click.getActionCommand().equals("Search")) {
-            ArrayList<Product> prodTypeFiltered = new ArrayList<Product>();
-            ArrayList<Product> brandTypeFiltered = new ArrayList<Product>();
-            ArrayList<Product> priceRangeFiltered = new ArrayList<Product>();
-            ArrayList<Product> stockOptionFiltered = new ArrayList<Product>();
-            ArrayList<Product> searchTermFiltered = new ArrayList<Product>();
-
-            String prodType = prodFilter.getSelectedItem().toString();
-            String brandType = brandFilter.getSelectedItem().toString();
-            String stockOption = stockFilter.getSelectedItem().toString();
-            String priceRange = priceFilter.getSelectedItem().toString();
-            String searchTerm = searchBar.getText();
+            search();
+        } else if (click.getActionCommand().equals("Clear Search")) {
             
-            //Search Filters
-            if (!prodType.equals("Select Product Type...")) {
-                for (Product prod: products) {
-                    String currProdType = prod.getClass().toString();
-                    currProdType = currProdType.substring(6, currProdType.length());
-                    if (currProdType.equals(prodType)) {
-                        prodTypeFiltered.add(prod);
-                    }
-                }
-            } else {
-                for (Product prod: products) {
-                    prodTypeFiltered.add(prod);
-                }
+            prodFilter.setSelectedIndex(0);
+            brandFilter.setSelectedIndex(0);
+            priceFilter.setSelectedIndex(0);
+            stockFilter.setSelectedIndex(0);
+            searchBar.setText("");
+        }
+
+        for (ProdButton button: viewButtons) {
+            if (click.getSource() == button) {
+                viewProd(button.getProd());
             }
-
-            if (!brandType.equals("Select Brand...")) {
-                for (Product prod: prodTypeFiltered) {
-                    String currBrandType = prod.getBrand();
-                    if (currBrandType.equals(brandType)) {
-                        brandTypeFiltered.add(prod);
-                    }
-                }
-            } else {
-                for (Product prod: prodTypeFiltered) {
-                    brandTypeFiltered.add(prod);
-                }
-            }
-
-            if (priceRange.equals("$300+")) {
-                double minPrice = 300.0;
-                for (Product prod: brandTypeFiltered) {
-                    if (prod.getPrice() >= minPrice) {
-                        priceRangeFiltered.add(prod);
-                    }
-                }
-            } else if (!priceRange.equals("Select Price Range...")) {
-                priceRange = priceRange.replace("$", "");
-                String[] prices = priceRange.split("-");
-                double minPrice = Double.parseDouble(prices[0]);
-                double maxPrice = Double.parseDouble(prices[1]);
-                for (Product prod: brandTypeFiltered) {
-                    if (minPrice <= prod.getPrice() && maxPrice >= prod.getPrice()) {
-                        priceRangeFiltered.add(prod);
-                    }
-                }
-            } else {
-                for (Product prod: brandTypeFiltered) {
-                    priceRangeFiltered.add(prod);
-                }
-            }
-
-            if (stockOption.equals("Select Availability...")) {
-                for (Product prod: priceRangeFiltered) {
-                    stockOptionFiltered.add(prod);
-                }
-            } else if (stockOption.equals("In Stock")) {
-                for (Product prod: priceRangeFiltered) {
-                    if (prod.getQuantity() > 0) {
-                        stockOptionFiltered.add(prod);
-                    }
-                }
-            } else if (stockOption.equals("Out of Stock")) {
-                for (Product prod: priceRangeFiltered) {
-                    if (prod.getQuantity() == 0) {
-                        stockOptionFiltered.add(prod);
-                    }
-                }
-            }
-
-            //Searchbar
-            ArrayList<String> prodNames = new ArrayList<String>();
-
-            for (Product prod: stockOptionFiltered) {
-                prodNames.add(prod.getBrand() + " " + prod.getModel());
-            }
-
-            if (searchTerm.equals("")) {
-                for (Product prod: stockOptionFiltered) {
-                    searchTermFiltered.add(prod);
-                }
-            } else {
-                for (String name: prodNames) {
-                    if (name.contains(searchTerm)) {
-                        for (Product prod: products) {
-                            String currName = prod.getBrand() + " " + prod.getModel();
-                            if (currName.equals(name) && !searchTermFiltered.contains(prod)) {
-                                searchTermFiltered.add(prod);
-                            }
-                        }
-                    }
-                }
-            }
-
-            scrollPanel.removeAll();
-            viewButtons.clear();
-            int yValue = 0;
-
-            for (Product prod: searchTermFiltered) {
-                ProdButton viewProdButton = new ProdButton(prod.getBrand() + " " + prod.getModel(), prod);
-                viewProdButton.addActionListener(this);
-                viewProdButton.setBounds(0, yValue, 969, 20);
-                viewProdButton.setFocusable(false);
-                viewProdButton.setHorizontalAlignment(SwingConstants.LEFT);
-                viewButtons.add(viewProdButton);
-                scrollPanel.add(viewProdButton);
-                yValue += 20;
-            }
-
-            scrollPanel.revalidate();
-            scrollPanel.repaint();
         }
     }
 }
