@@ -12,7 +12,7 @@ import java.nio.file.StandardCopyOption;
 
 public class Inventory implements ActionListener {
     
-    private JPanel optionsPanel, menuTab, newProdPanel, inventoryPanel, scrollPanel, updateProdPanel;
+    private JPanel optionsPanel, menuTab, newProdPanel, inventoryPanel, scrollPanel, updateProdPanel, viewProdPanel;
     private JLabel title, imgLabel, prodLabel;
     private JFrame WIN;
     private ErrorWindow errorWindow;
@@ -379,7 +379,7 @@ public class Inventory implements ActionListener {
     } 
 
     public void searchProds() {
-        
+      
         optionsPanel.setVisible(false);
         WIN.setSize(1000, 800);
         WIN.setLayout(new BorderLayout());
@@ -494,7 +494,7 @@ public class Inventory implements ActionListener {
         scrollPanel.repaint();
     }
 
-    public void search() {
+    public void searchFilters() {
 
         ArrayList<Product> prodTypeFiltered = new ArrayList<Product>();
         ArrayList<Product> brandTypeFiltered = new ArrayList<Product>();
@@ -631,11 +631,101 @@ public class Inventory implements ActionListener {
         String prodType = prodToView.getClass().toString();
         prodType = prodType.substring(6, prodType.length());
 
+        viewProdPanel = new JPanel();
+        viewProdPanel.setLayout(null);
+            
+        backToSearchProds = new JButton("Back");
+        backToSearchProds.setBounds(460, 700, 80, 20);
+        backToSearchProds.addActionListener(this);
+
         if (prodType.equals("Racquet")) {
             
-            backToSearchProds = new JButton("Back");
-            //backToSearchProds.setBounds(x, y, width, height);
+            JLabel brandLabel = new JLabel("Brand:");
+            brandLabel.setBounds(150, 180, 100, 20);
+            JLabel brand = new JLabel(prodToView.getBrand());
+            brand.setBounds(150, 200, 300, 20);
+
+            JLabel modelLabel = new JLabel("Model:");
+            modelLabel.setBounds(150, 230, 100, 20);
+            JLabel model = new JLabel(prodToView.getModel());
+            model.setBounds(150, 250, 300, 20);
+
+            JLabel priceLabel = new JLabel("Price:");
+            priceLabel.setBounds(150, 280, 100, 20);
+            JLabel price = new JLabel(prodToView.getPrice() + "");
+            price.setBounds(160, 300, 100, 20);
+            JLabel dollarSign = new JLabel("$");
+            dollarSign.setBounds(150, 300, 150, 20);
+
+            JLabel quantityLabel = new JLabel("Quantity:");
+            quantityLabel.setBounds(350, 280, 100, 20);
+            JLabel quantity = new JLabel(prodToView.getQuantity() + "");
+            quantity.setBounds(350, 300, 100, 20);
+
+            JLabel maxTensionLabel = new JLabel("Maximum Tension:");
+            maxTensionLabel.setBounds(150, 330, 150, 20);
+
+            JLabel horizontalTensionLabel = new JLabel("H:");
+            horizontalTensionLabel.setBounds(150, 350, 20, 20);
+            JLabel horizontalTension = new JLabel(prodToView.getHorizontalTension());
+            horizontalTension.setBounds(165, 350, 30, 20);
+            
+            JLabel verticalTensionLabel = new JLabel("V:");
+            verticalTensionLabel.setBounds(240, 350, 20, 20);
+            JLabel verticalTension = new JLabel(prodToView.getVerticalTension());
+            verticalTension.setBounds(255, 350, 30, 20);
+
+            JLabel gripSizeLabel = new JLabel("Grip Size:");
+            gripSizeLabel.setBounds(150, 380, 150, 20);
+            JLabel gripSize = new JLabel(prodToView.getGripSize());
+            gripSize.setBounds(150, 400, 150, 20);
+
+            JLabel weightLabel = new JLabel("Weight:");
+            weightLabel.setBounds(150, 430, 150, 20);
+            JLabel weight = new JLabel(prodToView.getWeight());
+            weight.setBounds(150, 450, 150, 20);
+
+            JLabel descriptionLabel = new JLabel("Description:");
+            descriptionLabel.setBounds(150, 480, 300, 20);
+            JLabel description = new JLabel(prodToView.getDescription());
+            description.setBounds(150, 500, 700, 150);
+            
+            ImageIcon defaultImgIcon = new ImageIcon(prodToView.getImage().toString());
+            Image defaultImg = defaultImgIcon.getImage();
+            Image resizedDefaultImg = defaultImg.getScaledInstance(350, 250, Image.SCALE_SMOOTH);
+            ImageIcon resizedDefaultIcon = new ImageIcon(resizedDefaultImg);
+            
+            JLabel imgLabel = new JLabel("");
+            imgLabel.setIcon(resizedDefaultIcon);
+            imgLabel.setBounds(505, 180, 350, 250);
+
+            viewProdPanel.add(brandLabel);
+            viewProdPanel.add(brand);
+            viewProdPanel.add(modelLabel);
+            viewProdPanel.add(model);
+            viewProdPanel.add(priceLabel);
+            viewProdPanel.add(price);
+            viewProdPanel.add(dollarSign);
+            viewProdPanel.add(quantityLabel);
+            viewProdPanel.add(quantity);
+            viewProdPanel.add(maxTensionLabel);
+            viewProdPanel.add(horizontalTensionLabel);
+            viewProdPanel.add(horizontalTension);
+            viewProdPanel.add(verticalTensionLabel);
+            viewProdPanel.add(verticalTension);
+            viewProdPanel.add(gripSizeLabel);
+            viewProdPanel.add(gripSize);
+            viewProdPanel.add(weightLabel);
+            viewProdPanel.add(weight);
+            viewProdPanel.add(descriptionLabel);
+            viewProdPanel.add(description);
+            viewProdPanel.add(imgLabel);
+
+        } else if (prodType.equals("Shoe")) {
+            System.out.println("shoe");
         }
+        viewProdPanel.add(backToSearchProds);
+        WIN.add(viewProdPanel);
     }
 
     public void newShoe() {
@@ -1262,7 +1352,7 @@ public class Inventory implements ActionListener {
             prodToUpdate.updateSizes(selectedSizes);
             updateProdFile();
         } else if (click.getActionCommand().equals("Search")) {
-            search();
+            searchFilters();
         } else if (click.getActionCommand().equals("Clear Search")) {
             
             prodFilter.setSelectedIndex(0);
@@ -1270,6 +1360,9 @@ public class Inventory implements ActionListener {
             priceFilter.setSelectedIndex(0);
             stockFilter.setSelectedIndex(0);
             searchBar.setText("");
+        } else if (click.getSource() == backToSearchProds) {
+            viewProdPanel.setVisible(false);
+            searchProds();
         }
 
         for (ProdButton button: viewButtons) {
