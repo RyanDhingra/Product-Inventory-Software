@@ -1,5 +1,7 @@
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -104,7 +106,7 @@ public class Inventory implements ActionListener {
                 String emptyLine = inventoryScanner.nextLine();
                 String gender = inventoryScanner.nextLine();
                 String sizes = inventoryScanner.nextLine();
-                sizes = sizes.substring(17, sizes.length());
+                sizes = sizes.substring(16, sizes.length());
                 Scanner sizeScanner = new Scanner(sizes);
                 sizeScanner.useDelimiter(",");
                 ArrayList<Double> sizeList = new ArrayList<Double>();
@@ -177,7 +179,7 @@ public class Inventory implements ActionListener {
 
             inventoryFile.close();
         } catch (IOException error) {
-            System.out.println(error.getMessage());
+            errorWindow = new ErrorWindow("Inventory file not found.");
         }
     }
 
@@ -640,10 +642,11 @@ public class Inventory implements ActionListener {
 
         if (prodType.equals("Racquet")) {
             
-            JLabel brandLabel = new JLabel("Brand:");
-            brandLabel.setBounds(150, 180, 100, 20);
-            JLabel brand = new JLabel(prodToView.getBrand());
-            brand.setBounds(150, 200, 300, 20);
+            String title = prodToView.getBrand() + " " + prodToView.getModel();
+
+            JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
+            titleLabel.setFont(new Font("Roboto", Font.PLAIN, 40));
+            titleLabel.setBounds(0, 30, 987, 50);
 
             JLabel modelLabel = new JLabel("Model:");
             modelLabel.setBounds(150, 230, 100, 20);
@@ -687,20 +690,30 @@ public class Inventory implements ActionListener {
 
             JLabel descriptionLabel = new JLabel("Description:");
             descriptionLabel.setBounds(150, 480, 300, 20);
-            JLabel description = new JLabel(prodToView.getDescription());
+            JTextArea description = new JTextArea(prodToView.getDescription());
             description.setBounds(150, 500, 700, 150);
+            description.setEditable(false);
             
-            ImageIcon defaultImgIcon = new ImageIcon(prodToView.getImage().toString());
-            Image defaultImg = defaultImgIcon.getImage();
-            Image resizedDefaultImg = defaultImg.getScaledInstance(350, 250, Image.SCALE_SMOOTH);
-            ImageIcon resizedDefaultIcon = new ImageIcon(resizedDefaultImg);
+            ImageIcon prodImgIcn = new ImageIcon(prodToView.getImage().toString());
+            Image prodImg = prodImgIcn.getImage();
+            /*BufferedImage buffered = null;
+            try {
+                buffered = ImageIO.read(new File(prodToView.getImage().toString()));
+                Graphics g = buffered.getGraphics();
+                Graphics2D g2D = (Graphics2D) g;
+                g2D.drawImage(buffered, 0, 0, null);
+            } catch (IOException error) {
+                System.out.println(error.getMessage());
+            }*/
+            Image prodImgResized = prodImg.getScaledInstance(350, 250, Image.SCALE_SMOOTH);
+            //Image prodImgResized = (Image) buffered;
+            ImageIcon image = new ImageIcon(prodImgResized);
             
             JLabel imgLabel = new JLabel("");
-            imgLabel.setIcon(resizedDefaultIcon);
+            imgLabel.setIcon(image);
             imgLabel.setBounds(505, 180, 350, 250);
 
-            viewProdPanel.add(brandLabel);
-            viewProdPanel.add(brand);
+            viewProdPanel.add(titleLabel);
             viewProdPanel.add(modelLabel);
             viewProdPanel.add(model);
             viewProdPanel.add(priceLabel);
@@ -1123,6 +1136,14 @@ public class Inventory implements ActionListener {
     }
 
     @Override
+    public void paint(Graphics g, Image img, int xPos, int yPos) {
+
+        Graphics2D g2D = (Graphics2D) g;
+        g2D.drawImage(img, xPos, yPos, null);
+        
+    }
+
+    @Override
     public void actionPerformed(ActionEvent click) {
         
         if (click.getActionCommand().equals("Edit Products")) {
@@ -1271,6 +1292,9 @@ public class Inventory implements ActionListener {
             }
             editProds();
         } else if (click.getSource() == shoeDoneButton) {
+            if (errorWindow != null) {
+                errorWindow = null; 
+            }
             try {
                 File fileStorage = new File("C:\\Users\\ryand\\Downloads\\Inventory GUI\\Product Images\\" + imgName);
                 
@@ -1291,25 +1315,27 @@ public class Inventory implements ActionListener {
                     }
                 }
 
-                products.add(new Shoe(Double.parseDouble(priceText.getText()), brandText.getText(), modelText.getText(), descriptionText.getText(), Integer.parseInt(quantityText.getText()), new File("Product Images\\" + imgName), selectedSizes, prodGender.getSelectedItem().toString()));
-                updateProdFile();
+                if (selectedSizes.isEmpty()) {
+                    errorWindow = new ErrorWindow("Select sizes.");
+                } else {
+                    products.add(new Shoe(Double.parseDouble(priceText.getText()), brandText.getText(), modelText.getText(), descriptionText.getText(), Integer.parseInt(quantityText.getText()), new File("Product Images\\" + imgName), selectedSizes, prodGender.getSelectedItem().toString()));
+                    updateProdFile();
 
-                brandText.setText("");
-                modelText.setText("");
-                priceText.setText("");
-                quantityText.setText("");
-                descriptionText.setText("");
-                selectedSizes.clear();
-                prodGender.setSelectedItem("Select Gender...");
-                currFile = null;
+                    brandText.setText("");
+                    modelText.setText("");
+                    priceText.setText("");
+                    quantityText.setText("");
+                    descriptionText.setText("");
+                    prodGender.setSelectedItem("Select Gender...");
+                    currFile = null;
 
-                ImageIcon defaultImgIcon = new ImageIcon("Add Image.png");
-                Image defaultImg = defaultImgIcon.getImage();
-                Image resizedDefaultImg = defaultImg.getScaledInstance(350, 250, Image.SCALE_SMOOTH);
-                ImageIcon resizedDefaultIcon = new ImageIcon(resizedDefaultImg);
+                    ImageIcon defaultImgIcon = new ImageIcon("Add Image.png");
+                    Image defaultImg = defaultImgIcon.getImage();
+                    Image resizedDefaultImg = defaultImg.getScaledInstance(350, 250, Image.SCALE_SMOOTH);
+                    ImageIcon resizedDefaultIcon = new ImageIcon(resizedDefaultImg);
 
-                imgLabel.setIcon(resizedDefaultIcon);
-                
+                    imgLabel.setIcon(resizedDefaultIcon);
+                }
             } catch (IOException error) {
                 System.out.println(error.getMessage());
             } catch (NumberFormatException e) {
@@ -1342,15 +1368,25 @@ public class Inventory implements ActionListener {
             newQuantityText.setText("");
             updateProdFile();
         } else if (click.getSource() == updateSizeButton) {
+            if (errorWindow != null) {
+                errorWindow = null;
+            }
+
             ArrayList<Double> selectedSizes = new ArrayList<Double>();
+
             for (JCheckBox checkBox: updateSizeCheckBoxes) {
                 if (checkBox.isSelected()) {
                     selectedSizes.add(Double.parseDouble(checkBox.getText()));
                     checkBox.setSelected(false);   
                 }
             }
-            prodToUpdate.updateSizes(selectedSizes);
-            updateProdFile();
+
+            if (selectedSizes.isEmpty()) {
+                errorWindow = new ErrorWindow("Select sizes.");
+            } else {
+                prodToUpdate.updateSizes(selectedSizes);
+                updateProdFile();
+            }
         } else if (click.getActionCommand().equals("Search")) {
             searchFilters();
         } else if (click.getActionCommand().equals("Clear Search")) {
