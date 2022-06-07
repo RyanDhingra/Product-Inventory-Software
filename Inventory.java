@@ -1,5 +1,7 @@
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.event.MouseInputListener;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.event.*;
@@ -588,7 +590,8 @@ public class Inventory implements ActionListener {
         ArrayList<String> prodNames = new ArrayList<String>();
 
         for (Product prod: stockOptionFiltered) {
-            prodNames.add(prod.getBrand() + " " + prod.getModel());
+            String currName = prod.getBrand() + " " + prod.getModel();
+            prodNames.add(currname.toLowerCase());
         }
 
         if (searchTerm.equals("")) {
@@ -597,7 +600,7 @@ public class Inventory implements ActionListener {
             }
         } else {
             for (String name: prodNames) {
-                if (name.contains(searchTerm)) {
+                if (name.contains(searchTerm.toLowerCase())) {
                     for (Product prod: products) {
                         String currName = prod.getBrand() + " " + prod.getModel();
                         if (currName.equals(name) && !searchTermFiltered.contains(prod)) {
@@ -730,9 +733,100 @@ public class Inventory implements ActionListener {
             viewProdPanel.add(gripSize);
             viewProdPanel.add(weightLabel);
             viewProdPanel.add(weight);
-
         } else if (prodType.equals("Shoe")) {
-            System.out.println("shoe");
+
+            ArrayList<JCheckBox> currProdCheckboxes = new ArrayList<JCheckBox>();
+
+            JLabel priceLabel = new JLabel("Price:");
+            priceLabel.setBounds(150, 180, 100, 30);
+            priceLabel.setFont(labelFont);
+            JLabel price = new JLabel(prodToView.getPrice() + "");
+            price.setBounds(160, 210, 100, 20);
+            price.setFont(prodFont);
+            JLabel dollarSign = new JLabel("$");
+            dollarSign.setBounds(150, 210, 150, 20);
+            dollarSign.setFont(labelFont);
+
+            JLabel quantityLabel = new JLabel("Quantity:");
+            quantityLabel.setBounds(350, 180, 100, 30);
+            quantityLabel.setFont(labelFont);
+            JLabel quantity = new JLabel(prodToView.getQuantity() + "");
+            quantity.setBounds(350, 210, 100, 20);
+            quantity.setFont(prodFont);
+
+            JLabel genderLabel = new JLabel("Gender:");
+            genderLabel.setBounds(150, 245, 100, 30);
+            genderLabel.setFont(labelFont);
+            JLabel prodGender = new JLabel(prodToView.getGender());
+            prodGender.setBounds(150, 275, 100, 20);
+            prodGender.setFont(prodFont);
+
+            JLabel sizeLabel = new JLabel("Sizes:");
+            sizeLabel.setBounds(150, 310, 150, 20);
+            sizeLabel.setFont(labelFont);
+
+            JCheckBox size7 = new JCheckBox("7");
+            size7.setBounds(150, 340, 50, 20);
+            currProdCheckboxes.add(size7);
+            
+            JCheckBox size7_5 = new JCheckBox("7.5");
+            size7_5.setBounds(150, 380, 100, 20);
+            currProdCheckboxes.add(size7_5);
+            
+            JCheckBox size8 = new JCheckBox("8");
+            size8.setBounds(150, 420, 50, 20);
+            currProdCheckboxes.add(size8);
+            
+            JCheckBox size8_5 = new JCheckBox("8.5");
+            size8_5.setBounds(250, 340, 100, 20);
+            currProdCheckboxes.add(size8_5);
+            
+            JCheckBox size9 = new JCheckBox("9");
+            size9.setBounds(250, 380, 50, 20);
+            currProdCheckboxes.add(size9);
+            
+            JCheckBox size9_5 = new JCheckBox("9.5");
+            size9_5.setBounds(250, 420, 100, 20);
+            currProdCheckboxes.add(size9_5);
+            
+            JCheckBox size10 = new JCheckBox("10");
+            size10.setBounds(350, 340, 50, 20);
+            currProdCheckboxes.add(size10);
+            
+            JCheckBox size10_5 = new JCheckBox("10.5");
+            size10_5.setBounds(350, 380, 100, 20);
+            currProdCheckboxes.add(size10_5);
+            
+            JCheckBox size11 = new JCheckBox("11");
+            size11.setBounds(350, 420, 50, 20);
+            currProdCheckboxes.add(size11);
+            
+            for (JCheckBox checkBox: currProdCheckboxes) {
+                checkBox.setFont(labelFont);
+                checkBox.removeMouseListener(checkBox.getMouseListeners()[0]);
+                double checkboxSize = Double.parseDouble(checkBox.getText());
+                if (prodToView.getSizes().contains(checkboxSize)) {
+                    checkBox.setSelected(true);
+                }
+            }
+
+            viewProdPanel.add(priceLabel);
+            viewProdPanel.add(price);
+            viewProdPanel.add(dollarSign);
+            viewProdPanel.add(quantityLabel);
+            viewProdPanel.add(quantity);
+            viewProdPanel.add(genderLabel);
+            viewProdPanel.add(prodGender);
+            viewProdPanel.add(sizeLabel);
+            viewProdPanel.add(size7);
+            viewProdPanel.add(size7_5);
+            viewProdPanel.add(size8);
+            viewProdPanel.add(size8_5);
+            viewProdPanel.add(size9);
+            viewProdPanel.add(size9_5);
+            viewProdPanel.add(size10);
+            viewProdPanel.add(size10_5);
+            viewProdPanel.add(size11);
         }
 
         viewProdPanel.add(titleLabel);
