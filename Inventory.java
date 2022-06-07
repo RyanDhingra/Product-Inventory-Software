@@ -640,82 +640,82 @@ public class Inventory implements ActionListener {
         backToSearchProds.setBounds(460, 700, 80, 20);
         backToSearchProds.addActionListener(this);
 
+        Font prodFont = new Font("Arial", Font.PLAIN, 20);
+        Font labelFont = new Font("Arial", Font.BOLD, 20);
+
+        String title = prodToView.getBrand() + " " + prodToView.getModel();
+
+        JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Roboto", Font.PLAIN, 40));
+        titleLabel.setBounds(0, 30, 987, 50);
+
+        ImageIcon prodImgIcn = new ImageIcon(prodToView.getImage().toString());
+        Image prodImg = prodImgIcn.getImage();
+        Image prodImgResized = prodImg.getScaledInstance(350, 250, Image.SCALE_SMOOTH);
+        ImageIcon image = new ImageIcon(prodImgResized);
+                    
+        JLabel imgLabel = new JLabel("");
+        imgLabel.setIcon(image);
+        imgLabel.setBounds(505, 180, 350, 250);
+
+        JLabel descriptionLabel = new JLabel("Description:");
+        descriptionLabel.setBounds(150, 480, 300, 20);
+        descriptionLabel.setFont(labelFont);
+        JTextArea description = new JTextArea(prodToView.getDescription());
+        description.setBounds(150, 500, 700, 150);
+        description.setEditable(false);
+
         if (prodType.equals("Racquet")) {
-            
-            String title = prodToView.getBrand() + " " + prodToView.getModel();
-
-            JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
-            titleLabel.setFont(new Font("Roboto", Font.PLAIN, 40));
-            titleLabel.setBounds(0, 30, 987, 50);
-
-            JLabel modelLabel = new JLabel("Model:");
-            modelLabel.setBounds(150, 230, 100, 20);
-            JLabel model = new JLabel(prodToView.getModel());
-            model.setBounds(150, 250, 300, 20);
 
             JLabel priceLabel = new JLabel("Price:");
-            priceLabel.setBounds(150, 280, 100, 20);
+            priceLabel.setBounds(150, 180, 100, 30);
+            priceLabel.setFont(labelFont);
             JLabel price = new JLabel(prodToView.getPrice() + "");
-            price.setBounds(160, 300, 100, 20);
+            price.setBounds(160, 210, 100, 20);
+            price.setFont(prodFont);
             JLabel dollarSign = new JLabel("$");
-            dollarSign.setBounds(150, 300, 150, 20);
+            dollarSign.setBounds(150, 210, 150, 20);
+            dollarSign.setFont(labelFont);
 
             JLabel quantityLabel = new JLabel("Quantity:");
-            quantityLabel.setBounds(350, 280, 100, 20);
+            quantityLabel.setBounds(350, 180, 100, 30);
+            quantityLabel.setFont(labelFont);
             JLabel quantity = new JLabel(prodToView.getQuantity() + "");
-            quantity.setBounds(350, 300, 100, 20);
+            quantity.setBounds(350, 210, 100, 20);
+            quantity.setFont(prodFont);
 
             JLabel maxTensionLabel = new JLabel("Maximum Tension:");
-            maxTensionLabel.setBounds(150, 330, 150, 20);
+            maxTensionLabel.setBounds(150, 245, 200, 30);
+            maxTensionLabel.setFont(labelFont);
 
             JLabel horizontalTensionLabel = new JLabel("H:");
-            horizontalTensionLabel.setBounds(150, 350, 20, 20);
+            horizontalTensionLabel.setBounds(150, 275, 20, 20);
+            horizontalTensionLabel.setFont(labelFont);
             JLabel horizontalTension = new JLabel(prodToView.getHorizontalTension());
-            horizontalTension.setBounds(165, 350, 30, 20);
+            horizontalTension.setBounds(175, 275, 100, 20);
+            horizontalTension.setFont(prodFont);
             
             JLabel verticalTensionLabel = new JLabel("V:");
-            verticalTensionLabel.setBounds(240, 350, 20, 20);
+            verticalTensionLabel.setBounds(240, 275, 20, 20);
+            verticalTensionLabel.setFont(labelFont);
             JLabel verticalTension = new JLabel(prodToView.getVerticalTension());
-            verticalTension.setBounds(255, 350, 30, 20);
+            verticalTension.setBounds(265, 275, 100, 20);
+            verticalTension.setFont(prodFont);
 
             JLabel gripSizeLabel = new JLabel("Grip Size:");
-            gripSizeLabel.setBounds(150, 380, 150, 20);
+            gripSizeLabel.setBounds(150, 310, 150, 30);
+            gripSizeLabel.setFont(labelFont);
             JLabel gripSize = new JLabel(prodToView.getGripSize());
-            gripSize.setBounds(150, 400, 150, 20);
+            gripSize.setBounds(150, 340, 150, 20);
+            gripSize.setFont(prodFont);
 
             JLabel weightLabel = new JLabel("Weight:");
-            weightLabel.setBounds(150, 430, 150, 20);
+            weightLabel.setBounds(150, 375, 150, 30);
+            weightLabel.setFont(labelFont);
             JLabel weight = new JLabel(prodToView.getWeight());
-            weight.setBounds(150, 450, 150, 20);
+            weight.setBounds(150, 405, 150, 20);
+            weight.setFont(prodFont);
 
-            JLabel descriptionLabel = new JLabel("Description:");
-            descriptionLabel.setBounds(150, 480, 300, 20);
-            JTextArea description = new JTextArea(prodToView.getDescription());
-            description.setBounds(150, 500, 700, 150);
-            description.setEditable(false);
-            
-            ImageIcon prodImgIcn = new ImageIcon(prodToView.getImage().toString());
-            Image prodImg = prodImgIcn.getImage();
-            /*BufferedImage buffered = null;
-            try {
-                buffered = ImageIO.read(new File(prodToView.getImage().toString()));
-                Graphics g = buffered.getGraphics();
-                Graphics2D g2D = (Graphics2D) g;
-                g2D.drawImage(buffered, 0, 0, null);
-            } catch (IOException error) {
-                System.out.println(error.getMessage());
-            }*/
-            Image prodImgResized = prodImg.getScaledInstance(350, 250, Image.SCALE_SMOOTH);
-            //Image prodImgResized = (Image) buffered;
-            ImageIcon image = new ImageIcon(prodImgResized);
-            
-            JLabel imgLabel = new JLabel("");
-            imgLabel.setIcon(image);
-            imgLabel.setBounds(505, 180, 350, 250);
-
-            viewProdPanel.add(titleLabel);
-            viewProdPanel.add(modelLabel);
-            viewProdPanel.add(model);
             viewProdPanel.add(priceLabel);
             viewProdPanel.add(price);
             viewProdPanel.add(dollarSign);
@@ -730,14 +730,18 @@ public class Inventory implements ActionListener {
             viewProdPanel.add(gripSize);
             viewProdPanel.add(weightLabel);
             viewProdPanel.add(weight);
-            viewProdPanel.add(descriptionLabel);
-            viewProdPanel.add(description);
-            viewProdPanel.add(imgLabel);
 
         } else if (prodType.equals("Shoe")) {
             System.out.println("shoe");
         }
+
+        viewProdPanel.add(titleLabel);
+        viewProdPanel.add(descriptionLabel);
+        viewProdPanel.add(description);
+        viewProdPanel.add(imgLabel);
         viewProdPanel.add(backToSearchProds);
+        viewProdPanel.revalidate();
+        viewProdPanel.repaint();
         WIN.add(viewProdPanel);
     }
 
