@@ -1502,7 +1502,8 @@ public class Inventory implements ActionListener {
         for (ProdButton button: viewButtons) {
             if (click.getSource() == button) {
                 viewProd(button.getProd());
-                //paint(Graphics g);
+                Graphics g;
+                paint(g);
             }
         }
     }
