@@ -1,7 +1,6 @@
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.MouseInputListener;
-
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.event.*;
@@ -22,7 +21,7 @@ public class Inventory implements ActionListener {
     private ErrorWindow errorWindow;
     private ArrayList<Product> products;
     private JComboBox prodType, prodGender, brandFilter, prodFilter, priceFilter, stockFilter;
-    private File currFile;
+    private File currFile, imgToView;
     private JTextField brandText, modelText, priceText, horizontalTensionText, verticalTensionText, gripSizeText, weightText, quantityText, newPriceText, newQuantityText, searchBar; 
     private String imgName;
     private JButton racquetDoneButton, backToOptions, backToEditProds, shoeDoneButton, backToUpdateProd, updatePriceButton, updateQuantityButton, updateSizeButton, backToSearchProds;
@@ -590,8 +589,7 @@ public class Inventory implements ActionListener {
         ArrayList<String> prodNames = new ArrayList<String>();
 
         for (Product prod: stockOptionFiltered) {
-            String currName = prod.getBrand() + " " + prod.getModel();
-            prodNames.add(currname.toLowerCase());
+            prodNames.add(prod.getBrand() + " " + prod.getModel());
         }
 
         if (searchTerm.equals("")) {
@@ -600,7 +598,7 @@ public class Inventory implements ActionListener {
             }
         } else {
             for (String name: prodNames) {
-                if (name.contains(searchTerm.toLowerCase())) {
+                if (name.toLowerCase().contains(searchTerm.toLowerCase())) {
                     for (Product prod: products) {
                         String currName = prod.getBrand() + " " + prod.getModel();
                         if (currName.equals(name) && !searchTermFiltered.contains(prod)) {
@@ -652,13 +650,14 @@ public class Inventory implements ActionListener {
         titleLabel.setFont(new Font("Roboto", Font.PLAIN, 40));
         titleLabel.setBounds(0, 30, 987, 50);
 
-        ImageIcon prodImgIcn = new ImageIcon(prodToView.getImage().toString());
-        Image prodImg = prodImgIcn.getImage();
-        Image prodImgResized = prodImg.getScaledInstance(350, 250, Image.SCALE_SMOOTH);
-        ImageIcon image = new ImageIcon(prodImgResized);
+        imgToView = prodToView.getImage();
+        //ImageIcon prodImgIcn = new ImageIcon(prodToView.getImage().toString());
+        //Image prodImg = prodImgIcn.getImage();
+        //Image prodImgResized = prodImg.getScaledInstance(350, 250, Image.SCALE_SMOOTH);
+        //ImageIcon image = new ImageIcon(prodImgResized);
                     
         JLabel imgLabel = new JLabel("");
-        imgLabel.setIcon(image);
+        //imgLabel.setIcon(image);
         imgLabel.setBounds(505, 180, 350, 250);
 
         JLabel descriptionLabel = new JLabel("Description:");
@@ -1233,12 +1232,13 @@ public class Inventory implements ActionListener {
         updateProdPanel.repaint();
     }
 
-    @Override
-    public void paint(Graphics g, Image img, int xPos, int yPos) {
+    public void paint(Graphics g) {
 
-        Graphics2D g2D = (Graphics2D) g;
-        g2D.drawImage(img, xPos, yPos, null);
-        
+        if (imgToView != null) {
+            Image image = ImageIO.read(imgToView);
+            g.drawImage(image, 505, 180, 350, 250, null);
+            WIN.repaint();
+        }
     }
 
     @Override
@@ -1502,6 +1502,7 @@ public class Inventory implements ActionListener {
         for (ProdButton button: viewButtons) {
             if (click.getSource() == button) {
                 viewProd(button.getProd());
+                //paint(Graphics g);
             }
         }
     }
