@@ -85,4 +85,12 @@ public class Product {
             return false;
         }
     }
+
+    public String getGrade() {
+        return "";
+    }
+
+    public String getMaterial() {
+        return "";
+    }
 }

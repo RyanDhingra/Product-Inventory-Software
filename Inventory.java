@@ -21,7 +21,7 @@ public class Inventory implements ActionListener {
     private ErrorWindow errorWindow;
     private ArrayList<Product> products;
     private JComboBox prodType, prodGender, brandFilter, prodFilter, priceFilter, stockFilter;
-    private File currFile, imgToView;
+    private File currFile;
     private JTextField brandText, modelText, priceText, horizontalTensionText, verticalTensionText, gripSizeText, weightText, quantityText, newPriceText, newQuantityText, searchBar; 
     private String imgName;
     private JButton racquetDoneButton, backToOptions, backToEditProds, shoeDoneButton, backToUpdateProd, updatePriceButton, updateQuantityButton, updateSizeButton, backToSearchProds;
@@ -98,7 +98,6 @@ public class Inventory implements ActionListener {
                 File image = new File("Product Images\\" + inventoryScanner.nextLine());
                 
                 products.add(new Racquet(brand, model, price, horizontalTensionNum, verticalTensionNum, gripSize, weight, description, quantity, image));
-            
             } else if (currLine.equals("Shoe")) {
                 
                 String brand = inventoryScanner.nextLine();
@@ -122,9 +121,32 @@ public class Inventory implements ActionListener {
                 File image = new File("Product Images\\" + inventoryScanner.nextLine());
                 sizeScanner.close();
 
-                products.add(new Shoe(price, brand, model, description, quantity, image, sizeList, gender));
-                
-            } //else if (currLine.equals("Shuttle"))
+                products.add(new Shoe(price, brand, model, description, quantity, image, sizeList, gender)); 
+            } else if (currLine.equals("Shuttle")) {
+
+                String brand = inventoryScanner.nextLine();
+                String model = inventoryScanner.nextLine();
+                double price = inventoryScanner.nextDouble();
+                String emptyLine = inventoryScanner.nextLine();
+                String grade = inventoryScanner.nextLine();
+                String material = inventoryScanner.nextLine();
+                String description = inventoryScanner.nextLine();
+                int quantity = inventoryScanner.nextInt();
+                emptyLine = inventoryScanner.nextLine();
+                File image = new File("Product Images\\" + inventoryScanner.nextLine());
+
+                products.add(new Shuttle(price, brand, model, description, quantity, image, grade, material));
+            } else if (currLine.equals("Shirt")) {
+
+            } else if (currLine.equals("Shorts")) {
+
+            } else if (currLine.equals("RacquetStrings")) {
+
+            } else if (currLine.equals("Socks")) {
+
+            } else if (currLine.equals("Bag")) {
+
+            }
         }
 
         inventoryScanner.close();
@@ -137,6 +159,7 @@ public class Inventory implements ActionListener {
             FileWriter inventoryFile = new FileWriter("Inventory.txt");
 
             for (Product prod: products) {
+                System.out.println(prod.getBrand() + " " + prod.getModel());
                 String prodType = prod.getClass().toString();
                 prodType = prodType.substring(6, prodType.length());
 
@@ -175,6 +198,12 @@ public class Inventory implements ActionListener {
                     String[] imgNameArray = prod.getImage().toString().split("\\\\");
                     inventoryFile.write(imgNameArray[imgNameArray.length - 1] + "\n");
                     inventoryFile.write("\n");
+                } else if (prodType.equals("Shuttle")) {
+                    inventoryFile.write(prodType + "\n");
+                    inventoryFile.write(prod.getBrand() + "\n");
+                    inventoryFile.write(prod.getModel() + "\n");
+                    inventoryFile.write(prod.getPrice() + "\n");
+                    inventoryFile.write(prod.getgra);
                 }
             }
 
@@ -650,14 +679,14 @@ public class Inventory implements ActionListener {
         titleLabel.setFont(new Font("Roboto", Font.PLAIN, 40));
         titleLabel.setBounds(0, 30, 987, 50);
 
-        imgToView = prodToView.getImage();
-        //ImageIcon prodImgIcn = new ImageIcon(prodToView.getImage().toString());
-        //Image prodImg = prodImgIcn.getImage();
-        //Image prodImgResized = prodImg.getScaledInstance(350, 250, Image.SCALE_SMOOTH);
-        //ImageIcon image = new ImageIcon(prodImgResized);
+
+        ImageIcon prodImgIcn = new ImageIcon(prodToView.getImage().toString());
+        Image prodImg = prodImgIcn.getImage();
+        Image prodImgResized = prodImg.getScaledInstance(350, 250, Image.SCALE_SMOOTH);
+        ImageIcon image = new ImageIcon(prodImgResized);
                     
         JLabel imgLabel = new JLabel("");
-        //imgLabel.setIcon(image);
+        imgLabel.setIcon(image);
         imgLabel.setBounds(505, 180, 350, 250);
 
         JLabel descriptionLabel = new JLabel("Description:");
@@ -1232,15 +1261,6 @@ public class Inventory implements ActionListener {
         updateProdPanel.repaint();
     }
 
-    public void paint(Graphics g) {
-
-        if (imgToView != null) {
-            Image image = ImageIO.read(imgToView);
-            g.drawImage(image, 505, 180, 350, 250, null);
-            WIN.repaint();
-        }
-    }
-
     @Override
     public void actionPerformed(ActionEvent click) {
         
@@ -1502,7 +1522,6 @@ public class Inventory implements ActionListener {
         for (ProdButton button: viewButtons) {
             if (click.getSource() == button) {
                 viewProd(button.getProd());
-                //paint(Graphics g);
             }
         }
     }
