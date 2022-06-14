@@ -159,7 +159,6 @@ public class Inventory implements ActionListener {
             FileWriter inventoryFile = new FileWriter("Inventory.txt");
 
             for (Product prod: products) {
-                System.out.println(prod.getBrand() + " " + prod.getModel());
                 String prodType = prod.getClass().toString();
                 prodType = prodType.substring(6, prodType.length());
 
@@ -203,7 +202,13 @@ public class Inventory implements ActionListener {
                     inventoryFile.write(prod.getBrand() + "\n");
                     inventoryFile.write(prod.getModel() + "\n");
                     inventoryFile.write(prod.getPrice() + "\n");
-                    inventoryFile.write(prod.getgra);
+                    inventoryFile.write(prod.getGrade() + "\n");
+                    inventoryFile.write(prod.getMaterial() + "\n");
+                    inventoryFile.write(prod.getDescription() + "\n");
+                    inventoryFile.write(prod.getQuantity() + "\n");
+                    String[] imgNameArray = prod.getImage().toString().split("\\\\");
+                    inventoryFile.write(imgNameArray[imgNameArray.length - 1] + "\n");
+                    inventoryFile.write("\n");
                 }
             }
 
