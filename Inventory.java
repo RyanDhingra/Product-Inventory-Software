@@ -38,7 +38,7 @@ public class Inventory implements ActionListener {
         WIN.setSize(400, 300);
         WIN.setResizable(false);
         WIN.setLocationRelativeTo(null);
-        WIN.setTitle("Login");
+        WIN.setTitle("Options Menu");
         WIN.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.products = new ArrayList<Product>();
         this.checkBoxes = new ArrayList<ProdCheckbox>();
@@ -220,6 +220,7 @@ public class Inventory implements ActionListener {
 
     //Updating existing products
     public void updateProd(Product prod) {
+        WIN.setTitle("Update Product");
         prodToUpdate = prod;
 
         if (selectedBoxes.size() != 0) {
@@ -304,6 +305,7 @@ public class Inventory implements ActionListener {
 
     //Adding new products screen
     public void newProd() {
+        WIN.setTitle("New Product");
         
         menuTab.setVisible(false);
 
@@ -352,6 +354,7 @@ public class Inventory implements ActionListener {
 
     //Editing products screen
     public void editProds() {
+        WIN.setTitle("Edit Products");
         checkBoxes.clear();
         
         optionsPanel.setVisible(false);
@@ -416,6 +419,7 @@ public class Inventory implements ActionListener {
     } 
 
     public void searchProds() {
+        WIN.setTitle("Search Products");
       
         optionsPanel.setVisible(false);
         WIN.setSize(1000, 800);
@@ -663,6 +667,7 @@ public class Inventory implements ActionListener {
     }
 
     public void viewProd(Product prodToView) {
+        WIN.setTitle("Product View");
 
         menuTab.setVisible(false);
         String prodType = prodToView.getClass().toString();
