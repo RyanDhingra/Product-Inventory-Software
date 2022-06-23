@@ -75,7 +75,6 @@ public class Product {
     }
 
     public void updateSizes(ArrayList<Double> newSizes) {
-        this.sizes = newSizes;
     }
 
     public Boolean checkStock() {
